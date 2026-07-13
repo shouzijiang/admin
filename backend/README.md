@@ -284,26 +284,16 @@ chown -R www:www runtime
 
 4. 在 MySQL 执行 `docs/database.sql`，初始化管理员（默认 `admin` / `admin123`，上线后请改密）
 
-5. 站点 Nginx 配置里加上（或合并进现有 `server`）：
+5. Nginx 完整配置见项目根目录旁：
 
-```nginx
-index index.html index.php;
+   **[`docs/nginx-admin.qianzhigame.cn.conf`](../docs/nginx-admin.qianzhigame.cn.conf)**
 
-location / {
-    try_files $uri $uri/ /index.html;
-}
+   复制到宝塔「网站 → 设置 → 配置文件」整份粘贴保存即可。关键点：
 
-location /admin {
-    if (!-e $request_filename) {
-        rewrite ^(.*)$ /index.php?s=$1 last;
-    }
-}
-
-location ~ \.php$ {
-    # 宝塔一般已有 PHP 处理块，保留即可
-    include enable-php-81.conf;   # 按你实际 PHP 版本调整
-}
-```
+   - `root` → `/www/wwwroot/admin.qianzhigame.cn/public`
+   - SSL 段里的 `#error_page 404/404.html;` **不要改**（宝塔会校验）
+   - 404 页只在 `#ERROR-PAGE-START` 段注释
+   - 含 `location /`（前端）与 `location /admin`（API）
 
 ### 4. 以后更新代码
 

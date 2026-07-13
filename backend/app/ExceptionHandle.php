@@ -7,6 +7,7 @@ use think\exception\Handle;
 use think\exception\HttpException;
 use think\exception\HttpResponseException;
 use think\exception\ValidateException;
+use think\facade\Log;
 use think\Response;
 use Throwable;
 
@@ -36,7 +37,16 @@ class ExceptionHandle extends Handle
      */
     public function report(Throwable $exception): void
     {
-        // 使用内置的方式记录异常日志
+        if (!$this->isIgnoreReport($exception)) {
+            Log::error(sprintf(
+                '[%s] %s in %s:%d',
+                $exception::class,
+                $exception->getMessage(),
+                $exception->getFile(),
+                $exception->getLine()
+            ));
+            Log::error($exception->getTraceAsString());
+        }
         parent::report($exception);
     }
 
@@ -50,9 +60,51 @@ class ExceptionHandle extends Handle
      */
     public function render($request, Throwable $e): Response
     {
-        // 添加自定义异常处理机制
+        if ($e instanceof HttpResponseException) {
+            return $e->getResponse();
+        }
 
-        // 其他错误交给系统处理
+        // 管理后台 API 统一返回 JSON，便于前端展示真实错误原因
+        if ($this->isAdminApi($request)) {
+            $bizCode = 500;
+            $httpStatus = 500;
+            $message = $e->getMessage() ?: '服务器内部错误';
+
+            if ($e instanceof ValidateException || $e instanceof \InvalidArgumentException) {
+                $bizCode = 400;
+                $httpStatus = 400;
+            } elseif ($e instanceof HttpException) {
+                $httpStatus = $e->getStatusCode();
+                $bizCode = $httpStatus;
+                $message = $e->getMessage() ?: $message;
+            } elseif ($e instanceof \think\db\exception\DbException) {
+                $message = '数据库错误：' . ($e->getMessage() ?: '查询失败');
+            }
+
+            Log::error(sprintf(
+                'admin api fail %s %s => %s',
+                $request->method(),
+                $request->url(true),
+                $message
+            ));
+
+            return json([
+                'code' => $bizCode,
+                'message' => $message,
+                'data' => null,
+            ], $httpStatus);
+        }
+
         return parent::render($request, $e);
+    }
+
+    private function isAdminApi($request): bool
+    {
+        $path = (string) $request->pathinfo();
+        if ($path !== '' && (str_starts_with($path, 'admin') || str_starts_with($path, '/admin'))) {
+            return true;
+        }
+        $uri = (string) $request->url();
+        return str_contains($uri, '/admin');
     }
 }

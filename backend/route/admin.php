@@ -25,5 +25,8 @@ Route::group('admin', function () {
         Route::post('streamer/payouts', 'Admin/streamerPayoutAdd');
         Route::get('mails', 'Admin/mailList');
         Route::post('mails/send', 'Admin/mailSend');
-    })->middleware(\app\middleware\AdminAuth::class);
+    })->middleware([
+        \app\middleware\AdminAuth::class,
+        \app\middleware\AdminRequestLog::class,
+    ]);
 });
