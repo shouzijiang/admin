@@ -5,11 +5,10 @@
     <el-tabs v-model="activeTab">
       <!-- 每日单价 -->
       <el-tab-pane label="每日视频单价" name="price">
-        <div style="margin-bottom:16px;display:flex;gap:8px;flex-wrap:wrap;">
+        <div style="margin-bottom:16px;">
           <el-button type="primary" @click="openPriceDialog()">+ 录入当日收入</el-button>
-          <el-button @click="syncAll" :loading="syncing">重算全部已录入日期</el-button>
         </div>
-        <el-table :data="priceList" border stripe>
+        <el-table :data="priceList" border stripe max-height="calc(100vh - 260px)">
           <el-table-column prop="stat_date" label="统计日" width="120" />
           <el-table-column prop="video_total_amount" label="视频总收入(元)" width="140" />
           <el-table-column prop="video_claim_count" label="全站领取次数" width="120" />
@@ -67,7 +66,7 @@
           </div>
 
           <h4>每日收益明细</h4>
-          <el-table :data="settlement.daily" border stripe size="small" max-height="320">
+          <el-table :data="settlement.daily" border stripe size="small" max-height="calc(100vh - 420px)">
             <el-table-column prop="stat_date" label="日期" width="120" />
             <el-table-column prop="video_count" label="视频次数" width="100" />
             <el-table-column prop="video_unit_price" label="当日单价" width="110">
@@ -77,7 +76,7 @@
           </el-table>
 
           <h4>打款记录</h4>
-          <el-table :data="settlement.payouts" border stripe size="small">
+          <el-table :data="settlement.payouts" border stripe size="small" max-height="280">
             <el-table-column prop="id" label="ID" width="60" />
             <el-table-column prop="period_end" label="结算截止日" width="120" />
             <el-table-column prop="paid_amount" label="打款金额(元)" width="120" />
@@ -143,7 +142,6 @@ const pricePageSize = 30
 const priceDialog = ref(false)
 const priceEditDate = ref(null)
 const priceSaving = ref(false)
-const syncing = ref(false)
 const priceForm = ref({ stat_date: '', video_total_amount: 0, remark: '' })
 
 const streamerId = ref('')
@@ -205,19 +203,6 @@ async function syncOne(statDate) {
   if (res.code === 200) {
     ElMessage.success('已重算 ' + statDate)
     fetchPrices()
-  }
-}
-
-async function syncAll() {
-  syncing.value = true
-  try {
-    const res = await http.post('/admin/streamer/unit-prices/sync', {})
-    if (res.code === 200) {
-      ElMessage.success(`已重算 ${res.data.list?.length ?? 0} 天`)
-      fetchPrices()
-    }
-  } finally {
-    syncing.value = false
   }
 }
 

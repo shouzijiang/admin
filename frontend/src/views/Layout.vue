@@ -26,12 +26,17 @@ function logout() {
 </script>
 
 <style scoped>
-.layout { height: 100vh; }
+.layout {
+  height: 100vh;
+  overflow: hidden;
+}
 .el-aside {
   background: #304156;
   color: #fff;
   display: flex;
   flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
 }
 .logo {
   padding: 20px 16px 12px;
@@ -39,6 +44,7 @@ function logout() {
   font-weight: bold;
   text-align: center;
   color: #fff;
+  flex-shrink: 0;
 }
 .logout {
   padding: 16px;
@@ -47,6 +53,17 @@ function logout() {
   cursor: pointer;
   margin-top: auto;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
 }
-.el-menu { border-right: none; }
+.el-menu {
+  border-right: none;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+:deep(.el-main) {
+  height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
 </style>

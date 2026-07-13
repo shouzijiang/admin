@@ -170,10 +170,10 @@ class Admin extends BaseController
     {
         try {
             $statDate = (string) $request->post('stat_date', '');
-            $project = $this->getProject($request);
-            $data = $statDate !== ''
-                ? $this->service->syncChannelUnitPrice($project, $statDate)
-                : ['list' => $this->service->syncAllChannelUnitPrices($project)];
+            if ($statDate === '') {
+                return json(['code' => 400, 'message' => '缺少 stat_date', 'data' => null]);
+            }
+            $data = $this->service->syncChannelUnitPrice($this->getProject($request), $statDate);
             return json(['code' => 200, 'message' => '同步完成', 'data' => $data]);
         } catch (\InvalidArgumentException $e) {
             return json(['code' => 400, 'message' => $e->getMessage(), 'data' => null]);

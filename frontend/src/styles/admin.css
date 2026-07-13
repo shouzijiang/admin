@@ -1,9 +1,21 @@
-/* 后台全局布局与表格间距 */
+/* 后台全局布局与表格间距 —— 禁止整页系统滚动条，列表在表内滚动 */
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
 
 .el-main {
   padding: 20px 24px;
   background: #f5f7fa;
-  min-height: 100vh;
+  height: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .el-main > div > h2 {
@@ -12,6 +24,7 @@
   font-weight: 600;
   color: #303133;
   line-height: 1.4;
+  flex-shrink: 0;
 }
 
 .el-main > div > h3,
@@ -20,6 +33,7 @@
   font-size: 15px;
   font-weight: 600;
   color: #303133;
+  flex-shrink: 0;
 }
 
 /* 表格：略增行高与左右内边距，避免拥挤 */
@@ -61,6 +75,7 @@
 .el-table + .el-pagination,
 .el-pagination {
   margin-top: 16px;
+  flex-shrink: 0;
 }
 
 /* 描述列表间距与表格对齐 */

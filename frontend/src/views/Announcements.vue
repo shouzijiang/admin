@@ -4,7 +4,7 @@
     <div style="margin-bottom:16px;">
       <el-button type="primary" @click="openDialog()">+ 新建公告</el-button>
     </div>
-    <el-table :data="list" border stripe>
+    <el-table :data="list" border stripe max-height="calc(100vh - 160px)">
       <el-table-column prop="id" label="ID" width="70" />
       <el-table-column prop="version_code" label="版本号" width="120" />
       <el-table-column prop="title" label="标题" min-width="160" show-overflow-tooltip />

@@ -388,17 +388,6 @@ class AdminService
         ];
     }
 
-    public function syncAllChannelUnitPrices(string $project): array
-    {
-        $dates = Db::connect($project)->name('pun_game_channel_unit_price')
-            ->where('video_total_amount', '>', 0)->order('stat_date', 'asc')->column('stat_date');
-        $results = [];
-        foreach ($dates as $date) {
-            $results[] = $this->syncChannelUnitPrice($project, (string) $date);
-        }
-        return $results;
-    }
-
     public function streamerSettlement(string $project, int $userId): ?array
     {
         $db = Db::connect($project);

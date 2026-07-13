@@ -48,7 +48,7 @@
     </el-card>
 
     <h3>发送记录（最近 30 条）</h3>
-    <el-table :data="mailList" border stripe>
+    <el-table :data="mailList" border stripe max-height="360">
       <el-table-column prop="id" label="ID" width="60" />
       <el-table-column prop="scope" label="范围" width="60">
         <template #default="{ row }">{{ row.scope === 'all' ? '全服' : '用户' }}</template>

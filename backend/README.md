@@ -138,7 +138,7 @@ admin/
 - **API**:
   - `GET /admin/streamer/unit-prices`  — 每日单价列表（分页）
   - `POST /admin/streamer/unit-prices`  — 录入当日视频总收入并自动计算单价 (`stat_date`, `video_total_amount`, `remark`)
-  - `POST /admin/streamer/unit-prices/sync`  — 重算单价（传 `stat_date` 重算单日，不传则重算全部已录入日期）
+  - `POST /admin/streamer/unit-prices/sync`  — 重算单日单价（必传 `stat_date`）
   - `GET /admin/streamer/settlement?user_id=`  — 邀请人结算详情（每日明细、打款记录、总收益/余额）
   - `POST /admin/streamer/payouts`  — 添加打款记录 (`user_id`, `period_end`, `paid_amount`, `remark`)
 - **单价计算**: `video_unit_price = TRUNCATE(video_total_amount / video_claim_count, 4)`，除数来自全站 `pun_reward_claim_record` 中 `reward_video` 成功次数
@@ -194,7 +194,7 @@ admin/
 | POST | `/admin/users/progress` | 修改通关记录与排行榜 |
 | GET | `/admin/streamer/unit-prices` | 每日视频单价列表 |
 | POST | `/admin/streamer/unit-prices` | 录入当日收入并计算单价 |
-| POST | `/admin/streamer/unit-prices/sync` | 重算单价 |
+| POST | `/admin/streamer/unit-prices/sync` | 重算单日单价 |
 | GET | `/admin/streamer/settlement` | 邀请人结算详情 |
 | POST | `/admin/streamer/payouts` | 添加打款记录 |
 | GET | `/admin/mails` | 邮件历史列表 |
