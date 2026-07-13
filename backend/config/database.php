@@ -23,7 +23,7 @@ return [
         'mysql' => [
             'type'            => env('DB_TYPE', 'mysql'),
             'hostname'        => env('DB_HOST', '127.0.0.1'),
-            'database'        => env('DB_NAME', 'pun_admin'),
+            'database'        => env('DB_NAME', 'qianzhi_admin'),
             'username'        => env('DB_USER', 'root'),
             'password'        => env('DB_PASS', ''),
             'hostport'        => env('DB_PORT', '3306'),

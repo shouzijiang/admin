@@ -5,6 +5,7 @@ import ActivityConfig from '../views/ActivityConfig.vue'
 import Announcements from '../views/Announcements.vue'
 import UserLookup from '../views/UserLookup.vue'
 import MailSend from '../views/MailSend.vue'
+import StreamerSettlement from '../views/StreamerSettlement.vue'
 
 const routes = [
   { path: '/login', component: Login },
@@ -16,6 +17,7 @@ const routes = [
       { path: 'activity', component: ActivityConfig },
       { path: 'announcements', component: Announcements },
       { path: 'users', component: UserLookup },
+      { path: 'streamer', component: StreamerSettlement },
       { path: 'mails', component: MailSend },
     ]
   },

@@ -1,5 +1,5 @@
 -- 管理后台独立数据库
--- CREATE DATABASE IF NOT EXISTS `pun_admin` DEFAULT CHARSET utf8mb4;
+-- CREATE DATABASE IF NOT EXISTS `qianzhi_admin` DEFAULT CHARSET utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `admin_users` (
   `id`         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -13,5 +13,5 @@ CREATE TABLE IF NOT EXISTS `admin_users` (
 
 -- 默认管理员 admin / admin123
 INSERT INTO `admin_users` (`username`, `password`, `role`) VALUES
-('admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'superadmin')
+('admin', '$2y$10$FylNE3.dO4fdrgsD8fy6puAfqbSYR9XWoeGKoO5XmeMNSIC3pqgk.', 'superadmin')
 ON DUPLICATE KEY UPDATE `username` = `username`;

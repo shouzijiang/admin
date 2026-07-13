@@ -2,7 +2,7 @@
 
 ## 项目概述
 
-谐音梗猜一猜 游戏管理后台。ThinkPHP 8 后端 + Vue 3 + Element Plus 前端，自定义 JWT 认证。
+千帜游 游戏管理后台。ThinkPHP 8 后端 + Vue 3 + Element Plus 前端，自定义 JWT 认证。
 
 ## 项目结构
 

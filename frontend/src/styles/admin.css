@@ -1,0 +1,102 @@
+/* 后台全局布局与表格间距 */
+
+.el-main {
+  padding: 20px 24px;
+  background: #f5f7fa;
+  min-height: 100vh;
+}
+
+.el-main > div > h2 {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+  line-height: 1.4;
+}
+
+.el-main > div > h3,
+.el-main > div > h4 {
+  margin: 20px 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #303133;
+}
+
+/* 表格：略增行高与左右内边距，避免拥挤 */
+.el-table {
+  --el-table-header-bg-color: #fafafa;
+  --el-table-row-hover-bg-color: #f5f9ff;
+}
+
+.el-table .el-table__cell {
+  padding: 12px 0;
+}
+
+.el-table .cell {
+  padding-left: 14px;
+  padding-right: 14px;
+  line-height: 1.5;
+}
+
+.el-table--small .el-table__cell {
+  padding: 8px 0;
+}
+
+.el-table--small .cell {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+.el-table th.el-table__cell {
+  font-weight: 600;
+  color: #606266;
+}
+
+/* 操作列按钮间距 */
+.el-table .el-button + .el-button {
+  margin-left: 8px;
+}
+
+/* 表格上方工具栏、分页 */
+.el-table + .el-pagination,
+.el-pagination {
+  margin-top: 16px;
+}
+
+/* 描述列表间距与表格对齐 */
+.el-descriptions {
+  margin-bottom: 4px;
+}
+
+.el-descriptions .el-descriptions__cell {
+  padding: 12px 14px !important;
+}
+
+/* 卡片内边距更舒适 */
+.el-card__body {
+  padding: 18px 20px;
+}
+
+.el-card__header {
+  padding: 14px 20px;
+}
+
+/* Tabs 与内容间距 */
+.el-tabs__header {
+  margin-bottom: 16px;
+}
+
+.el-tabs__content {
+  padding-top: 2px;
+}
+
+/* 分割线上下留白 */
+.el-divider {
+  margin: 20px 0;
+}
+
+.el-divider--horizontal.el-divider--content-left,
+.el-divider--horizontal.el-divider--content-center,
+.el-divider--horizontal.el-divider--content-right {
+  margin: 24px 0 16px;
+}

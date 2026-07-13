@@ -10,7 +10,13 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="目标用户ID" v-if="form.scope === 'user'">
-          <el-input-number v-model="form.target_user_id" :min="1" placeholder="输入用户ID" />
+          <el-input-number
+            v-model="form.target_user_id"
+            :min="1"
+            :controls="false"
+            placeholder="输入用户ID"
+            style="width:280px"
+          />
         </el-form-item>
         <el-form-item label="邮件标题">
           <el-input v-model="form.title" placeholder="邮件标题" />
@@ -27,13 +33,20 @@
         <el-form-item label="奖励数量" v-if="form.reward_type">
           <el-input-number v-model="form.reward_amount" :min="1" :max="999" />
         </el-form-item>
+        <el-alert
+          v-if="form.scope === 'all' && form.reward_type"
+          type="warning"
+          :closable="false"
+          show-icon
+          title="全服邮件发奖将立即给当前所有注册用户增加解字次数，之后新注册的玩家不会自动获得"
+          style="margin-bottom:16px;"
+        />
         <el-form-item>
           <el-button type="primary" :loading="sending" @click="send">发送</el-button>
         </el-form-item>
       </el-form>
     </el-card>
 
-    <el-divider />
     <h3>发送记录（最近 30 条）</h3>
     <el-table :data="mailList" border stripe>
       <el-table-column prop="id" label="ID" width="60" />
@@ -49,6 +62,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import http from '../api/index.js'
 
 const form = reactive({ scope: 'user', target_user_id: null, title: '', content: '', reward_type: '', reward_amount: 0 })
@@ -65,11 +79,31 @@ async function fetchMails() {
 async function send() {
   if (!form.title || !form.content) return
   if (form.scope === 'user' && !form.target_user_id) return
+  if (form.reward_type && (!form.reward_amount || form.reward_amount < 1)) {
+    ElMessage.warning('请填写奖励数量')
+    return
+  }
+
+  if (form.scope === 'all' && form.reward_type) {
+    try {
+      await ElMessageBox.confirm(
+        `确认向当前全服所有玩家发放 ${form.reward_amount} 次解字奖励？`,
+        '全服发奖确认',
+        { type: 'warning' }
+      )
+    } catch {
+      return
+    }
+  }
+
   sending.value = true
   try {
-    await http.post('/admin/mails/send', form)
-    form.title = ''; form.content = ''; form.reward_type = ''; form.reward_amount = 0
-    fetchMails()
+    const res = await http.post('/admin/mails/send', form)
+    if (res.code === 200) {
+      ElMessage.success(res.message || '发送成功')
+      form.title = ''; form.content = ''; form.reward_type = ''; form.reward_amount = 0
+      fetchMails()
+    }
   } catch {} finally { sending.value = false }
 }
 </script>

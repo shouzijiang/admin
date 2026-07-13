@@ -6,6 +6,7 @@
         <el-menu-item index="/activity">📢 活动配置</el-menu-item>
         <el-menu-item index="/announcements">📋 公告管理</el-menu-item>
         <el-menu-item index="/users">👤 用户查询</el-menu-item>
+        <el-menu-item index="/streamer">💰 邀请结算</el-menu-item>
         <el-menu-item index="/mails">✉️ 邮件发送</el-menu-item>
       </el-menu>
       <div class="logout" @click="logout">退出登录</div>
@@ -25,9 +26,27 @@ function logout() {
 </script>
 
 <style scoped>
-.layout { height:100vh; }
-.el-aside { background:#304156; color:#fff; display:flex; flex-direction:column; }
-.logo { padding:20px 16px 12px; font-size:16px; font-weight:bold; text-align:center; color:#fff; }
-.logout { padding:16px; text-align:center; color:#bfcbd9; cursor:pointer; margin-top:auto; border-top:1px solid rgba(255,255,255,0.1); }
-.el-menu { border-right:none; }
+.layout { height: 100vh; }
+.el-aside {
+  background: #304156;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+}
+.logo {
+  padding: 20px 16px 12px;
+  font-size: 16px;
+  font-weight: bold;
+  text-align: center;
+  color: #fff;
+}
+.logout {
+  padding: 16px;
+  text-align: center;
+  color: #bfcbd9;
+  cursor: pointer;
+  margin-top: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+.el-menu { border-right: none; }
 </style>

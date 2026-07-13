@@ -1,7 +1,6 @@
 <template>
   <div class="login-page">
     <el-card class="login-card" shadow="always">
-      <h1>🎯 谐音梗猜一猜</h1>
       <p>管理后台</p>
       <el-form @submit.prevent="login" label-width="0">
         <el-form-item>
@@ -21,6 +20,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import http from '../api/index.js'
 
 const router = useRouter()
@@ -29,7 +29,10 @@ const password = ref('')
 const loading = ref(false)
 
 async function login() {
-  if (!username.value || !password.value) return
+  if (!username.value || !password.value) {
+    ElMessage.warning('请输入用户名和密码')
+    return
+  }
   loading.value = true
   try {
     const res = await http.post('/admin/login', {
@@ -38,9 +41,16 @@ async function login() {
     })
     if (res.code === 200) {
       localStorage.setItem('admin_token', res.data.token)
+      ElMessage.success('登录成功')
       router.push('/')
+    } else {
+      ElMessage.error(res.message || '登录失败')
     }
-  } catch {} finally { loading.value = false }
+  } catch {
+    ElMessage.error('网络请求失败，请检查后端服务')
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 

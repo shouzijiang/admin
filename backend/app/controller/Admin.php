@@ -109,6 +109,102 @@ class Admin extends BaseController
         return json(['code' => 200, 'message' => 'success', 'data' => $d]);
     }
 
+    public function userUpdateQuota(Request $request): \think\Response
+    {
+        $uid = (int) $request->post('user_id', 0);
+        if ($uid <= 0) return json(['code' => 400, 'message' => '缺少用户ID', 'data' => null]);
+        try {
+            $quota = $request->post('quota', null);
+            if ($quota === null || $quota === '') {
+                return json(['code' => 400, 'message' => '请填写剩余解字次数', 'data' => null]);
+            }
+            $this->service->updateUserHintQuota($this->getProject($request), $uid, (int) $quota);
+            return json(['code' => 200, 'message' => '已保存', 'data' => null]);
+        } catch (\InvalidArgumentException $e) {
+            return json(['code' => 400, 'message' => $e->getMessage(), 'data' => null]);
+        }
+    }
+
+    public function userUpdateProgress(Request $request): \think\Response
+    {
+        $uid = (int) $request->post('user_id', 0);
+        if ($uid <= 0) return json(['code' => 400, 'message' => '缺少用户ID', 'data' => null]);
+        try {
+            $this->service->updateUserGameProgress(
+                $this->getProject($request),
+                $uid,
+                (array) $request->post('progress', []),
+                (array) $request->post('rank', []),
+            );
+            return json(['code' => 200, 'message' => '通关记录已保存', 'data' => null]);
+        } catch (\InvalidArgumentException $e) {
+            return json(['code' => 400, 'message' => $e->getMessage(), 'data' => null]);
+        }
+    }
+
+    // ─── 邀请结算 ───────────────────────────────────────
+
+    public function channelUnitPriceList(Request $request): \think\Response
+    {
+        $page = max(1, (int) $request->get('page', 1));
+        $pageSize = min(100, max(1, (int) $request->get('pageSize', 30)));
+        return json(['code' => 200, 'message' => 'success', 'data' => $this->service->channelUnitPriceList($this->getProject($request), $page, $pageSize)]);
+    }
+
+    public function channelUnitPriceSave(Request $request): \think\Response
+    {
+        try {
+            $data = $this->service->saveChannelUnitPrice(
+                $this->getProject($request),
+                (string) $request->post('stat_date', ''),
+                (float) $request->post('video_total_amount', 0),
+                $request->post('remark', null),
+            );
+            return json(['code' => 200, 'message' => '已保存并同步单价', 'data' => $data]);
+        } catch (\InvalidArgumentException $e) {
+            return json(['code' => 400, 'message' => $e->getMessage(), 'data' => null]);
+        }
+    }
+
+    public function channelUnitPriceSync(Request $request): \think\Response
+    {
+        try {
+            $statDate = (string) $request->post('stat_date', '');
+            $project = $this->getProject($request);
+            $data = $statDate !== ''
+                ? $this->service->syncChannelUnitPrice($project, $statDate)
+                : ['list' => $this->service->syncAllChannelUnitPrices($project)];
+            return json(['code' => 200, 'message' => '同步完成', 'data' => $data]);
+        } catch (\InvalidArgumentException $e) {
+            return json(['code' => 400, 'message' => $e->getMessage(), 'data' => null]);
+        }
+    }
+
+    public function streamerSettlement(Request $request): \think\Response
+    {
+        $uid = (int) $request->get('user_id', 0);
+        if ($uid <= 0) return json(['code' => 400, 'message' => '缺少用户ID', 'data' => null]);
+        $d = $this->service->streamerSettlement($this->getProject($request), $uid);
+        if (!$d) return json(['code' => 404, 'message' => '用户不存在', 'data' => null]);
+        return json(['code' => 200, 'message' => 'success', 'data' => $d]);
+    }
+
+    public function streamerPayoutAdd(Request $request): \think\Response
+    {
+        try {
+            $this->service->addStreamerPayout(
+                $this->getProject($request),
+                (int) $request->post('user_id', 0),
+                (string) $request->post('period_end', ''),
+                (float) $request->post('paid_amount', 0),
+                $request->post('remark', null),
+            );
+            return json(['code' => 200, 'message' => '打款记录已添加', 'data' => null]);
+        } catch (\InvalidArgumentException $e) {
+            return json(['code' => 400, 'message' => $e->getMessage(), 'data' => null]);
+        }
+    }
+
     // ─── 邮件管理 ───────────────────────────────────────
 
     public function mailList(Request $request): \think\Response
@@ -121,8 +217,16 @@ class Admin extends BaseController
     public function mailSend(Request $request): \think\Response
     {
         try {
-            $this->service->sendMail($this->getProject($request), $request->post());
-            return json(['code' => 200, 'message' => '发送成功', 'data' => null]);
+            $result = $this->service->sendMail($this->getProject($request), $request->post());
+            $message = '发送成功';
+            if (($result['reward_granted_users'] ?? 0) > 0) {
+                $message .= sprintf(
+                    '，已向 %d 名玩家发放 %d 次解字奖励',
+                    $result['reward_granted_users'],
+                    $result['reward_amount']
+                );
+            }
+            return json(['code' => 200, 'message' => $message, 'data' => $result]);
         } catch (\InvalidArgumentException $e) {
             return json(['code' => 400, 'message' => $e->getMessage(), 'data' => null]);
         }

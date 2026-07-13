@@ -1,6 +1,6 @@
 # 🎯 管理后台 (Admin Panel)
 
-谐音梗猜一猜 游戏管理后台，基于 ThinkPHP 8 + Vue 3 + Element Plus 构建。
+千帜游 游戏管理后台，基于 ThinkPHP 8 + Vue 3 + Element Plus 构建。
 
 ---
 
@@ -65,6 +65,7 @@ admin/
 ├── 📢 活动配置     → /activity        → ActivityConfig.vue
 ├── 📋 公告管理     → /announcements   → Announcements.vue
 ├── 👤 用户查询     → /users           → UserLookup.vue
+├── 💰 邀请结算     → /streamer        → StreamerSettlement.vue
 └── ✉️ 邮件发送     → /mails           → MailSend.vue
 
 独立页面:
@@ -112,20 +113,37 @@ admin/
   - `GET    /admin/announcements`  — 分页列表 (`page`, `pageSize`，最大 50 条/页)
   - `POST   /admin/announcements`  — 新增/更新
   - `DELETE /admin/announcements`  — 软删除 (设置 `is_published=0`)
-- **字段**: `id`, `version_code`, `title`, `body`, `is_published`, `published_at`
+- **字段**: `id`, `version_code`, `title`, `body`, `changelog_type` (`normal`/`notice`), `is_published`, `published_at`
+- **详情**: 列表「详情」按钮展示完整正文（按行拆分）与元信息
 
 ### 3. 👤 用户查询 (User Lookup)
 
-按 ID 或昵称搜索用户，查看用户详情（含提示额度、游戏排名）。
+按 ID、昵称或 OpenID 搜索用户，直接展示玩家详情，支持修改解字次数。
 
 - **页面**: `/users` → `UserLookup.vue`
-- **数据库表**: `users`, `pun_user_hint_quota`, `pun_game_rank` (项目库)
+- **数据库表**: `users`, `pun_user_hint_quota`, `pun_game_rank`, `pun_game_level_progress`, `pun_vip` (项目库)
 - **API**:
-  - `GET /admin/users/search?keyword=&page=&pageSize=`  — 搜索用户（纯数字=ID搜索，否则=昵称模糊搜索）
+  - `GET /admin/users/search?keyword=&page=&pageSize=`  — 搜索用户（纯数字=ID，含冒号或长串=OpenID，否则=昵称模糊搜索）
   - `GET /admin/users/detail?user_id=`  — 用户详情
-- **详情包含**: 基本资料、头像、提示额度 (剩余/累计消耗)、4 个游戏模式排名 (`max_level`, `max_level_mid`, `max_level_xhs`, `max_level_story`)
+  - `POST /admin/users/quota`  — 修改剩余解字次数 (`user_id`, `quota`)；累计消耗只读
+  - `POST /admin/users/progress`  — 修改通关记录与排行榜 (`user_id`, `progress`, `rank`)
+- **详情包含**: 基本资料、来源渠道、VIP、解字剩余（可编辑）/累计消耗（只读）、五模式（初级/经典/小红书/故事/歌曲）通关 JSON 数组与排行榜最高关（均可编辑）
 
-### 4. ✉️ 邮件发送 (Mail Send)
+### 4. 💰 邀请结算 (Streamer Settlement)
+
+管理每日视频广告单价、邀请人收益核算与打款记录，替代手工改表和 `打款验证.sql`。
+
+- **页面**: `/streamer` → `StreamerSettlement.vue`
+- **数据库表**: `pun_game_channel_unit_price`, `pun_game_streamer_payout`, `pun_game_channel_events`, `pun_reward_claim_record` (项目库，只读 events/claims)
+- **API**:
+  - `GET /admin/streamer/unit-prices`  — 每日单价列表（分页）
+  - `POST /admin/streamer/unit-prices`  — 录入当日视频总收入并自动计算单价 (`stat_date`, `video_total_amount`, `remark`)
+  - `POST /admin/streamer/unit-prices/sync`  — 重算单价（传 `stat_date` 重算单日，不传则重算全部已录入日期）
+  - `GET /admin/streamer/settlement?user_id=`  — 邀请人结算详情（每日明细、打款记录、总收益/余额）
+  - `POST /admin/streamer/payouts`  — 添加打款记录 (`user_id`, `period_end`, `paid_amount`, `remark`)
+- **单价计算**: `video_unit_price = TRUNCATE(video_total_amount / video_claim_count, 4)`，除数来自全站 `pun_reward_claim_record` 中 `reward_video` 成功次数
+
+### 5. ✉️ 邮件发送 (Mail Send)
 
 向全体或指定用户发送游戏内邮件，支持附带奖励。
 
@@ -135,6 +153,7 @@ admin/
   - `GET  /admin/mails`        — 邮件历史列表
   - `POST /admin/mails/send`   — 发送邮件
 - **字段**: `scope` (all/user), `target_user_id`, `title`, `content`, `reward_type` (目前仅 `hint_quota`), `reward_amount`
+- **全服发奖**: `scope=all` 时通过 SQL 给 `users` 表当前所有用户 `pun_user_hint_quota.quota` 增量（与 think1 手工 `UPDATE pun_user_hint_quota` 一致）；之后新注册用户不会自动获得
 
 ### 5. 🔐 登录认证 (Login)
 
@@ -142,7 +161,7 @@ admin/
 - **API**: `POST /admin/login`
 - **认证方式**: 自定义 JWT (HMAC-SHA256)，密钥配置在 `.env` 的 `ADMIN_JWT_SECRET`
 - **Token 有效期**: 7 天
-- **用户表**: `admin_users` (管理库 `pun_admin`)，包含字段 `id`, `username`, `password`, `role`, `is_active`
+- **用户表**: `admin_users` (管理库 `qianzhi_admin`)，包含字段 `id`, `username`, `password`, `role`, `is_active`
 
 <!-- FEATURES-END -->
 
@@ -171,6 +190,13 @@ admin/
 | DELETE | `/admin/announcements` | 软删除公告 |
 | GET | `/admin/users/search` | 用户搜索 |
 | GET | `/admin/users/detail` | 用户详情 |
+| POST | `/admin/users/quota` | 修改剩余解字次数 |
+| POST | `/admin/users/progress` | 修改通关记录与排行榜 |
+| GET | `/admin/streamer/unit-prices` | 每日视频单价列表 |
+| POST | `/admin/streamer/unit-prices` | 录入当日收入并计算单价 |
+| POST | `/admin/streamer/unit-prices/sync` | 重算单价 |
+| GET | `/admin/streamer/settlement` | 邀请人结算详情 |
+| POST | `/admin/streamer/payouts` | 添加打款记录 |
 | GET | `/admin/mails` | 邮件历史列表 |
 | POST | `/admin/mails/send` | 发送邮件 |
 
@@ -180,7 +206,7 @@ admin/
 
 ## 数据库
 
-### 管理库 (`pun_admin`)
+### 管理库 (`qianzhi_admin`)
 
 | 表名 | 说明 |
 |------|------|
@@ -199,23 +225,105 @@ admin/
 
 ---
 
-## 环境部署
+## 环境部署（宝塔）
 
-### 后端
+**不需要 Docker。** 本机构建前端后，把 `backend` 整目录上传到宝塔即可。
 
-```bash
-cd backend
-composer install
-cp .example.env .env   # 编辑 .env 配置数据库和 JWT 密钥
-php think run           # 启动开发服务器 (默认 8000 端口)
+### 1. 本机打包前端
+
+```powershell
+cd e:\php\admin\frontend
+pnpm install
+pnpm run build
 ```
 
-### 前端
+构建产物会写到 `backend/public/`：
+
+```
+backend/public/
+├── index.php      ← ThinkPHP 入口（保留，不要删）
+├── index.html     ← 前端页面（构建生成）
+└── assets/        ← 前端 JS/CSS（构建生成）
+```
+
+### 2. 上传到宝塔
+
+上传整个 `backend` 目录（不要上传 `frontend`、`node_modules`、`.git`）。
+
+建议服务器目录：
+
+```
+/www/wwwroot/你的域名/
+└── backend/
+    ├── app/
+    ├── config/
+    ├── route/
+    ├── public/          ← 宝塔「网站根目录」指到这里
+    │   ├── index.php
+    │   ├── index.html
+    │   └── assets/
+    ├── runtime/         ← 需可写
+    ├── composer.json
+    └── .env             ← 服务器上新建，勿上传本地 .env
+```
+
+### 3. 宝塔站点设置
+
+1. 新建站点，**根目录**设为：`/www/wwwroot/xxx/backend/public`
+2. PHP 版本建议 **8.1+**
+3. SSH / 终端执行：
+
+```bash
+cd /www/wwwroot/xxx/backend
+composer install --no-dev --optimize-autoloader
+cp .env.example .env
+# 编辑 .env：数据库、JWT、游戏库连接
+chmod -R 755 runtime
+chown -R www:www runtime
+```
+
+4. 在 MySQL 执行 `docs/database.sql`，初始化管理员（默认 `admin` / `admin123`，上线后请改密）
+
+5. 站点 Nginx 配置里加上（或合并进现有 `server`）：
+
+```nginx
+index index.html index.php;
+
+location / {
+    try_files $uri $uri/ /index.html;
+}
+
+location /admin {
+    if (!-e $request_filename) {
+        rewrite ^(.*)$ /index.php?s=$1 last;
+    }
+}
+
+location ~ \.php$ {
+    # 宝塔一般已有 PHP 处理块，保留即可
+    include enable-php-81.conf;   # 按你实际 PHP 版本调整
+}
+```
+
+### 4. 以后更新代码
+
+```powershell
+# 本机改完前端后重新打包
+cd e:\php\admin\frontend
+pnpm run build
+
+# 再上传这些到服务器对应位置：
+# - backend/public/index.html
+# - backend/public/assets/
+# - 改过的 backend/app、route 等 PHP 文件
+```
+
+### 前端开发模式
 
 ```bash
 cd frontend
-npm install
-npm run dev             # 启动 Vite 开发服务器 (端口 3000，代理 /admin → localhost:8787)
+pnpm install
+pnpm run dev             # 端口 3000，代理 /admin → 后端
 ```
 
 ---

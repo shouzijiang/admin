@@ -1,7 +1,9 @@
 <template>
   <div>
     <h2>📢 活动浮动入口配置</h2>
-    <el-button type="primary" @click="openDialog()" style="margin-bottom:16px">+ 新建活动</el-button>
+    <div style="margin-bottom:16px;">
+      <el-button type="primary" @click="openDialog()">+ 新建活动</el-button>
+    </div>
     <el-table :data="list" border stripe>
       <el-table-column prop="id" label="ID" width="60" />
       <el-table-column label="启用" width="70">

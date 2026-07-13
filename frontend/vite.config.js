@@ -6,11 +6,13 @@ export default defineConfig({
   server: {
     port: 3000,
     proxy: {
-      '/admin': 'http://10.3.123.48:8084',   // admin 后端
+      '/admin': 'http://localhost:8084',   // admin 后端
       '/api': 'https://sofun.online',      // think1 公开 API
     }
   },
   build: {
-    outDir: 'dist',
+    // 直接打到后端 public，上传宝塔时网站根目录指向 backend/public
+    outDir: '../backend/public',
+    emptyOutDir: false, // 保留 index.php / nginx.htaccess 等 PHP 入口文件
   }
 })
