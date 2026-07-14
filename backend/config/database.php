@@ -60,5 +60,26 @@ return [
             'trigger_sql'     => false,
             'fields_cache'    => false,
         ],
+
+        // 支付库
+        'qianzhi_pay' => [
+            'type'            => 'mysql',
+            'hostname'        => env('PAY_DB_HOST', '127.0.0.1'),
+            'database'        => env('PAY_DB_NAME', 'qianzhi_pay'),
+            'username'        => env('PAY_DB_USER', 'qianzhi_pay'),
+            'password'        => env('PAY_DB_PASS', '7ArSFmzy6hKSteY8'),
+            'hostport'        => env('PAY_DB_PORT', '3306'),
+            'charset'         => 'utf8mb4',
+            'prefix'          => '',
+            'params'          => [],
+            'deploy'          => 0,
+            'rw_separate'     => false,
+            'master_num'      => 1,
+            'slave_no'        => '',
+            'fields_strict'   => true,
+            'break_reconnect' => false,
+            'trigger_sql'     => false,
+            'fields_cache'    => false,
+        ],
     ],
 ];

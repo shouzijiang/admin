@@ -529,7 +529,7 @@ class AdminService
 
     public function orderList(string $project, array $filters, int $page = 1, int $pageSize = 20): array
     {
-        $q = Db::connect($project)->name('pay_order');
+        $q = Db::connect('qianzhi_pay')->name('pay_order');
 
         if (!empty($filters['order_no'])) {
             $q->where('order_no', 'like', '%' . $filters['order_no'] . '%');
