@@ -39,11 +39,8 @@ if (-not (Test-Path -LiteralPath $builtHtml)) {
 
 if ($needBuild) {
     Write-Host "=== Building frontend ==="
-    Push-Location $Frontend
-    try {
-        pnpm run build
-        if ($LASTEXITCODE -ne 0) { throw "Frontend build failed" }
-    } finally { Pop-Location }
+    cmd /c "cd /d `"$Frontend`" && pnpm run build"
+    if ($LASTEXITCODE -ne 0) { throw "Frontend build failed" }
     Write-Host ""
 }
 

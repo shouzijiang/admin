@@ -5,7 +5,7 @@
       v-model="keyword"
       placeholder="输入用户 ID、昵称或 OpenID"
       @keyup.enter="search"
-      style="width:480px;margin-bottom:16px;"
+      style="width:380px;margin-bottom:16px;"
       clearable
       size="default"
     >
@@ -13,7 +13,7 @@
     </el-input>
 
     <el-card v-if="candidates.length > 1" shadow="never" style="margin-bottom:16px;">
-      <p style="margin:0 0 12px;color:#909399;">找到 {{ candidates.length }} 个匹配用户，请选择：</p>
+      <p style="margin:0 0 12px;color:#909399;">找到 {{ candidates.length }} 个匹配用户，请选择 ：</p>
       <div style="display:flex;flex-wrap:wrap;gap:8px;">
         <el-button v-for="u in candidates" :key="u.id" @click="loadDetail(u.id)">
           {{ u.nickname || '未命名' }} (ID: {{ u.id }})
