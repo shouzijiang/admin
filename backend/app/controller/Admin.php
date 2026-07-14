@@ -142,6 +142,23 @@ class Admin extends BaseController
         }
     }
 
+    public function userUpdateVip(Request $request): \think\Response
+    {
+        $uid = (int) $request->post('user_id', 0);
+        if ($uid <= 0) return json(['code' => 400, 'message' => '缺少用户ID', 'data' => null]);
+        try {
+            $expireAt = $request->post('expire_at', null);
+            if ($expireAt !== null) {
+                $expireAt = trim((string) $expireAt);
+                if ($expireAt === '') $expireAt = null;
+            }
+            $this->service->updateUserVip($this->getProject($request), $uid, $expireAt);
+            return json(['code' => 200, 'message' => 'VIP已更新', 'data' => null]);
+        } catch (\InvalidArgumentException $e) {
+            return json(['code' => 400, 'message' => $e->getMessage(), 'data' => null]);
+        }
+    }
+
     // ─── 邀请结算 ───────────────────────────────────────
 
     public function channelUnitPriceList(Request $request): \think\Response

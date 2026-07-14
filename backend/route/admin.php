@@ -18,6 +18,7 @@ Route::group('admin', function () {
         Route::get('users/detail', 'Admin/userDetail');
         Route::post('users/quota', 'Admin/userUpdateQuota');
         Route::post('users/progress', 'Admin/userUpdateProgress');
+        Route::post('users/vip', 'Admin/userUpdateVip');
         Route::get('streamer/unit-prices', 'Admin/channelUnitPriceList');
         Route::post('streamer/unit-prices', 'Admin/channelUnitPriceSave');
         Route::post('streamer/unit-prices/sync', 'Admin/channelUnitPriceSync');

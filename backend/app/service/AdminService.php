@@ -315,6 +315,31 @@ class AdminService
         return array_values(array_unique(array_filter($list, fn ($v) => $v >= 0)));
     }
 
+    public function updateUserVip(string $project, int $userId, ?string $expireAt): void
+    {
+        if (!Db::connect($project)->name('users')->where('id', $userId)->find()) {
+            throw new \InvalidArgumentException('用户不存在');
+        }
+
+        $db = Db::connect($project);
+        $existing = $db->name('pun_vip')->where('user_id', $userId)->find();
+        $now = date('Y-m-d H:i:s');
+
+        if ($existing) {
+            $db->name('pun_vip')->where('user_id', $userId)->update([
+                'expire_at' => $expireAt,
+                'remark' => $existing['remark'] ?? '',
+            ]);
+        } else {
+            $db->name('pun_vip')->insert([
+                'user_id' => $userId,
+                'expire_at' => $expireAt,
+                'trial_used' => 0,
+                'remark' => '',
+            ]);
+        }
+    }
+
     // ─── 邀请结算 ──────────────────────────────────────────
 
     private const DEFAULT_VIDEO_UNIT_PRICE = 0.01;

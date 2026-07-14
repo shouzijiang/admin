@@ -27,7 +27,7 @@
           <el-avatar v-if="detail.user.avatar" :src="detail.user.avatar" :size="48" />
           <div>
             <div style="font-size:16px;font-weight:bold;">{{ detail.user.nickname || '未命名' }}</div>
-            <div style="color:#909399;font-size:13px;">ID: {{ detail.user.id }} · {{ detail.user.mp_platform }}</div>
+            <div style="color:#909399;font-size:13px;">ID: {{ detail.user.id }} · {{ platformLabel(detail.user.mp_platform) }}</div>
           </div>
         </div>
       </template>
@@ -39,6 +39,7 @@
         <el-descriptions-item label="来源渠道">{{ detail.user.channel || '—' }}</el-descriptions-item>
         <el-descriptions-item label="渠道绑定时间">{{ detail.user.channel_at || '—' }}</el-descriptions-item>
         <el-descriptions-item label="VIP到期" v-if="detail.vip">{{ detail.vip.expire_at || '永久' }}</el-descriptions-item>
+        <el-descriptions-item label="VIP到期" v-else>—</el-descriptions-item>
       </el-descriptions>
 
       <el-divider content-position="left">解字次数</el-divider>
@@ -51,6 +52,23 @@
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="savingQuota" @click="saveQuota">保存解字次数</el-button>
+        </el-form-item>
+      </el-form>
+
+      <el-divider content-position="left">VIP</el-divider>
+      <el-form :inline="true" label-width="120px">
+        <el-form-item label="到期时间">
+          <el-date-picker
+            v-model="editExpireAt"
+            type="datetime"
+            value-format="YYYY-MM-DD HH:mm:ss"
+            placeholder="留空表示永久"
+            style="width: 220px"
+            clearable
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="savingVip" @click="saveVip">保存VIP</el-button>
         </el-form-item>
       </el-form>
 
@@ -148,18 +166,29 @@ const searched = ref(false)
 const candidates = ref([])
 const detail = ref(null)
 const editQuota = ref(0)
+const editExpireAt = ref(null)
 const editRank = ref({})
 const editProgressText = ref({})
 const progressTab = ref('beginner')
 const savingQuota = ref(false)
+const savingVip = ref(false)
 const savingProgress = ref(false)
 
 function levelsToText(list) {
   return (list || []).join(',')
 }
 
+function platformLabel(val) {
+  if (!val) return '—'
+  const v = String(val).toLowerCase()
+  if (v === 'wechat' || v === 'wx') return '微信'
+  if (v === 'douyin' || v === 'dy' || v === 'tt') return '抖音'
+  return val
+}
+
 function initEditForms(data) {
   editQuota.value = data.quota?.quota ?? 0
+  editExpireAt.value = data.vip?.expire_at || null
   const rank = data.gameRank || {}
   const progress = data.levelProgress || {}
   editRank.value = {
@@ -237,6 +266,23 @@ async function saveQuota() {
     }
   } finally {
     savingQuota.value = false
+  }
+}
+
+async function saveVip() {
+  if (!detail.value) return
+  savingVip.value = true
+  try {
+    const res = await http.post('/admin/users/vip', {
+      user_id: detail.value.user.id,
+      expire_at: editExpireAt.value || '',
+    })
+    if (res.code === 200) {
+      ElMessage.success('VIP已更新')
+      await loadDetail(detail.value.user.id)
+    }
+  } finally {
+    savingVip.value = false
   }
 }
 
