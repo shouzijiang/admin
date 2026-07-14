@@ -66,7 +66,8 @@ admin/
 ├── 📋 公告管理     → /announcements   → Announcements.vue
 ├── 👤 用户查询     → /users           → UserLookup.vue
 ├── 💰 邀请结算     → /streamer        → StreamerSettlement.vue
-└── ✉️ 邮件发送     → /mails           → MailSend.vue
+├── ✉️ 邮件发送     → /mails           → MailSend.vue
+└── 🛒 订单查询     → /orders          → OrderQuery.vue
 
 独立页面:
 └── 🔐 登录         → /login           → Login.vue
@@ -155,7 +156,18 @@ admin/
 - **字段**: `scope` (all/user), `target_user_id`, `title`, `content`, `reward_type` (目前仅 `hint_quota`), `reward_amount`
 - **全服发奖**: `scope=all` 时通过 SQL 给 `users` 表当前所有用户 `pun_user_hint_quota.quota` 增量（与 think1 手工 `UPDATE pun_user_hint_quota` 一致）；之后新注册用户不会自动获得
 
-### 5. 🔐 登录认证 (Login)
+### 6. 🛒 订单查询 (Order Query)
+
+查询支付订单，支持多条件筛选和分页。
+
+- **页面**: `/orders` → `OrderQuery.vue`
+- **数据库表**: `pay_order` (项目库)
+- **API**:
+  - `GET /admin/orders`  — 订单列表（分页 + 多条件筛选）
+- **筛选条件**: `order_no` (订单号模糊), `user_id` (精确), `status` (pending/paid/refunded/closed), `pay_type` (wx_jsapi/wx_virtual), `platform` (ios/android), `pay_channel` (wechat/apple), `date_start`/`date_end` (创建时间范围)
+- **字段**: `id`, `order_no`, `user_id`, `amount`, `description`, `pay_type`, `platform`, `pay_channel`, `status`, `product_id`, `extra`, `transaction_id`, `prepay_id`, `paid_at`, `created_at`
+
+### 7. 🔐 登录认证 (Login)
 
 - **页面**: `/login` → `Login.vue`
 - **API**: `POST /admin/login`
@@ -199,6 +211,7 @@ admin/
 | POST | `/admin/streamer/payouts` | 添加打款记录 |
 | GET | `/admin/mails` | 邮件历史列表 |
 | POST | `/admin/mails/send` | 发送邮件 |
+| GET | `/admin/orders` | 订单列表（分页+筛选） |
 
 <!-- API-END -->
 
@@ -222,6 +235,7 @@ admin/
 | `pun_user_hint_quota` | 用户提示额度 | 用户查询、邮件发送 |
 | `pun_game_rank` | 用户游戏排名 | 用户查询 |
 | `pun_game_mail` | 游戏内邮件记录 | 邮件发送 |
+| `pay_order` | 支付订单 | 订单查询 |
 
 ---
 

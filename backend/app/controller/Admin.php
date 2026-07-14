@@ -205,6 +205,25 @@ class Admin extends BaseController
         }
     }
 
+    // ─── 订单查询 ───────────────────────────────────────
+
+    public function orderList(Request $request): \think\Response
+    {
+        $page = max(1, (int) $request->get('page', 1));
+        $pageSize = min(50, max(1, (int) $request->get('pageSize', 20)));
+        $filters = [
+            'order_no'    => trim((string) $request->get('order_no', '')),
+            'user_id'     => $request->get('user_id', ''),
+            'status'      => trim((string) $request->get('status', '')),
+            'pay_type'    => trim((string) $request->get('pay_type', '')),
+            'platform'    => trim((string) $request->get('platform', '')),
+            'pay_channel' => trim((string) $request->get('pay_channel', '')),
+            'date_start'  => trim((string) $request->get('date_start', '')),
+            'date_end'    => trim((string) $request->get('date_end', '')),
+        ];
+        return json(['code' => 200, 'message' => 'success', 'data' => $this->service->orderList($this->getProject($request), $filters, $page, $pageSize)]);
+    }
+
     // ─── 邮件管理 ───────────────────────────────────────
 
     public function mailList(Request $request): \think\Response

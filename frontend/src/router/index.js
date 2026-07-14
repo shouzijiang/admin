@@ -6,6 +6,7 @@ import Announcements from '../views/Announcements.vue'
 import UserLookup from '../views/UserLookup.vue'
 import MailSend from '../views/MailSend.vue'
 import StreamerSettlement from '../views/StreamerSettlement.vue'
+import OrderQuery from '../views/OrderQuery.vue'
 
 const routes = [
   { path: '/login', component: Login },
@@ -19,6 +20,7 @@ const routes = [
       { path: 'users', component: UserLookup },
       { path: 'streamer', component: StreamerSettlement },
       { path: 'mails', component: MailSend },
+      { path: 'orders', component: OrderQuery },
     ]
   },
 ]

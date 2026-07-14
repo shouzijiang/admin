@@ -8,6 +8,7 @@
         <el-menu-item index="/users">👤 用户查询</el-menu-item>
         <el-menu-item index="/streamer">💰 邀请结算</el-menu-item>
         <el-menu-item index="/mails">✉️ 邮件发送</el-menu-item>
+        <el-menu-item index="/orders">🛒 订单查询</el-menu-item>
       </el-menu>
       <div class="logout" @click="logout">退出登录</div>
     </el-aside>

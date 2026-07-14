@@ -525,6 +525,43 @@ class AdminService
         return (float) bcdiv(number_format($total, 2, '.', ''), (string) $claimCount, self::CALC_AMOUNT_SCALE);
     }
 
+    // ─── 订单查询 ──────────────────────────────────────────
+
+    public function orderList(string $project, array $filters, int $page = 1, int $pageSize = 20): array
+    {
+        $q = Db::connect($project)->name('pay_order');
+
+        if (!empty($filters['order_no'])) {
+            $q->where('order_no', 'like', '%' . $filters['order_no'] . '%');
+        }
+        if (!empty($filters['user_id'])) {
+            $q->where('user_id', (int) $filters['user_id']);
+        }
+        if (!empty($filters['status'])) {
+            $q->where('status', $filters['status']);
+        }
+        if (!empty($filters['pay_type'])) {
+            $q->where('pay_type', $filters['pay_type']);
+        }
+        if (!empty($filters['platform'])) {
+            $q->where('platform', $filters['platform']);
+        }
+        if (!empty($filters['pay_channel'])) {
+            $q->where('pay_channel', $filters['pay_channel']);
+        }
+        if (!empty($filters['date_start'])) {
+            $q->where('created_at', '>=', $filters['date_start'] . ' 00:00:00');
+        }
+        if (!empty($filters['date_end'])) {
+            $q->where('created_at', '<=', $filters['date_end'] . ' 23:59:59');
+        }
+
+        $total = $q->count();
+        $list = $q->order('id desc')->page($page, $pageSize)->select()->toArray();
+
+        return ['list' => $list, 'total' => $total];
+    }
+
     // ─── 邮件管理 ──────────────────────────────────────────
 
     public function mailList(string $project, int $page = 1, int $pageSize = 20): array
