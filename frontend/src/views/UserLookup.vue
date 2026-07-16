@@ -42,59 +42,87 @@
         <el-descriptions-item label="VIP到期" v-else>—</el-descriptions-item>
       </el-descriptions>
 
-      <el-divider content-position="left">解字次数</el-divider>
-      <el-form :inline="true" label-width="120px">
-        <el-form-item label="剩余解字次数">
-          <el-input-number v-model="editQuota" :min="0" :step="1" />
-        </el-form-item>
-        <el-form-item label="累计解字次数">
-          <span style="line-height:32px;color:#606266;">{{ detail.quota.total_used }}</span>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" :loading="savingQuota" @click="saveQuota">保存解字次数</el-button>
-        </el-form-item>
-      </el-form>
+      <!-- Row 1: 解字次数 | VIP -->
+      <el-row :gutter="16" class="section-row" align="stretch">
+        <el-col :span="12">
+          <el-card shadow="never" class="inline-card">
+            <template #header>解字次数</template>
+            <el-form :inline="true" class="compact-form">
+              <el-form-item label="剩余">
+                <el-input-number v-model="editQuota" :min="0" :step="1" size="small" style="width:110px" />
+              </el-form-item>
+              <el-form-item label="累计消耗">
+                <span class="readonly-val">{{ detail.quota.total_used }}</span>
+              </el-form-item>
+              <el-form-item>
+                <el-button type="primary" :loading="savingQuota" @click="saveQuota" size="small">保存</el-button>
+              </el-form-item>
+            </el-form>
+          </el-card>
+        </el-col>
+        <el-col :span="12">
+          <el-card shadow="never" class="inline-card">
+            <template #header>VIP</template>
+            <el-form :inline="true" class="compact-form">
+              <el-form-item label="到期时间">
+                <el-date-picker
+                  v-model="editExpireAt"
+                  type="datetime"
+                  value-format="YYYY-MM-DD HH:mm:ss"
+                  placeholder="留空=永久"
+                  style="width: 175px"
+                  clearable
+                />
+              </el-form-item>
+              <el-form-item>
+                <el-button type="primary" :loading="savingVip" @click="saveVip" size="small">保存</el-button>
+              </el-form-item>
+            </el-form>
+          </el-card>
+        </el-col>
+      </el-row>
 
-      <el-divider content-position="left">VIP</el-divider>
-      <el-form :inline="true" label-width="120px">
-        <el-form-item label="到期时间">
-          <el-date-picker
-            v-model="editExpireAt"
-            type="datetime"
-            value-format="YYYY-MM-DD HH:mm:ss"
-            placeholder="留空表示永久"
-            style="width: 220px"
-            clearable
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" :loading="savingVip" @click="saveVip">保存VIP</el-button>
-        </el-form-item>
-      </el-form>
-
-      <el-divider content-position="left">通关记录 & 排行榜</el-divider>
-      <el-tabs v-model="progressTab">
-        <el-tab-pane v-for="mode in progressModes" :key="mode.key" :label="mode.label" :name="mode.key">
-          <el-form label-width="120px" style="max-width:720px;">
-            <el-form-item :label="mode.rankLabel">
-              <el-input-number v-model="editRank[mode.rankField]" :step="1" />
-              <span style="margin-left:8px;color:#909399;font-size:12px;">{{ mode.rankHint }}</span>
-            </el-form-item>
-            <el-form-item :label="mode.progressLabel">
-              <el-input
-                v-model="editProgressText[mode.progressField]"
-                type="textarea"
-                :rows="4"
-                :placeholder="mode.placeholder"
-              />
-              <div style="margin-top:6px;color:#909399;font-size:12px;">
-                当前 {{ countLevels(mode.progressField) }} 关
+      <el-row :gutter="16" class="section-row">
+        <el-col :span="12">
+          <el-card shadow="never">
+            <template #header>领取行为</template>
+            <div v-if="detail.rewardClaims && detail.rewardClaims.length > 0" class="claims-wrap">
+              <div v-for="c in detail.rewardClaims" :key="c.type" class="claim-item">
+                <span class="claim-label">{{ c.label }}</span>
+                <span class="claim-count">{{ c.count }} 次</span>
+                <el-tag v-if="c.total_quota > 0" size="small" type="success">+{{ c.total_quota }}</el-tag>
               </div>
-            </el-form-item>
-          </el-form>
-        </el-tab-pane>
-      </el-tabs>
-      <el-button type="primary" :loading="savingProgress" @click="saveProgress">保存通关记录</el-button>
+            </div>
+            <div v-else class="empty-text">暂无领取记录</div>
+          </el-card>
+        </el-col>
+        <el-col :span="12">
+          <el-card shadow="never">
+            <template #header>通关记录 & 排行榜</template>
+            <el-tabs v-model="progressTab">
+              <el-tab-pane v-for="mode in progressModes" :key="mode.key" :label="mode.label" :name="mode.key">
+                <el-form label-width="125px" class="compact-form">
+                  <el-form-item :label="mode.rankLabel">
+                    <el-input-number v-model="editRank[mode.rankField]" :step="1" size="small" />
+                    <span class="form-hint">{{ mode.rankHint }}</span>
+                  </el-form-item>
+                  <el-form-item :label="mode.progressLabel">
+                    <el-input
+                      v-model="editProgressText[mode.progressField]"
+                      type="textarea"
+                      :rows="3"
+                      :placeholder="mode.placeholder"
+                      size="small"
+                    />
+                    <div class="form-hint">当前 {{ countLevels(mode.progressField) }} 关</div>
+                  </el-form-item>
+                </el-form>
+              </el-tab-pane>
+            </el-tabs>
+            <el-button type="primary" :loading="savingProgress" @click="saveProgress" size="small">保存</el-button>
+          </el-card>
+        </el-col>
+      </el-row>
     </el-card>
 
     <el-empty v-else-if="searched && !searching" description="未找到用户，请检查搜索条件" />
@@ -103,9 +131,12 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import http from '../api/index.js'
+
+const route = useRoute()
 
 const progressModes = [
   {
@@ -303,4 +334,81 @@ async function saveProgress() {
     savingProgress.value = false
   }
 }
+
+onMounted(() => {
+  const uid = route.query.user_id
+  if (uid) {
+    keyword.value = String(uid)
+    searched.value = true
+    const id = parseInt(uid, 10)
+    if (id > 0) loadDetail(id)
+  }
+})
 </script>
+
+<style scoped>
+.section-row {
+  margin-bottom: 16px;
+}
+.section-row:last-child {
+  margin-bottom: 0;
+}
+.inline-card {
+  height: 100%;
+}
+.inline-card :deep(.el-card__body) {
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+.compact-form :deep(.el-form-item) {
+  margin-bottom: 0;
+  margin-right: 14px;
+}
+.compact-form :deep(.el-form-item:last-child) {
+  margin-right: 0;
+}
+.compact-form :deep(.el-form-item__label) {
+  font-weight: 500;
+}
+.readonly-val {
+  line-height: 32px;
+  color: #606266;
+}
+.form-hint {
+  margin-left: 6px;
+  margin-top: 4px;
+  color: #909399;
+  font-size: 12px;
+}
+.empty-text {
+  color: #909399;
+  font-size: 13px;
+}
+.claims-wrap {
+  max-height: 340px;
+  overflow-y: auto;
+}
+.claim-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+.claim-item:last-child {
+  border-bottom: none;
+}
+.claim-label {
+  flex: 1;
+  font-size: 13px;
+  color: #303133;
+}
+.claim-count {
+  font-size: 13px;
+  color: #606266;
+  font-weight: 500;
+  min-width: 45px;
+  text-align: right;
+}
+</style>

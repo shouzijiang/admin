@@ -16,6 +16,22 @@ class Admin extends BaseController
         $this->service = new AdminService();
     }
 
+    // ─── 操作日志 ───────────────────────────────────
+
+    public function operationLogList(Request $request): \think\Response
+    {
+        $page = max(1, (int) $request->get('page', 1));
+        $pageSize = min(50, max(1, (int) $request->get('pageSize', 20)));
+        $filters = [
+            'admin_id'   => trim((string) $request->get('admin_id', '')),
+            'module'     => trim((string) $request->get('module', '')),
+            'status'     => trim((string) $request->get('status', '')),
+            'date_start' => trim((string) $request->get('date_start', '')),
+            'date_end'   => trim((string) $request->get('date_end', '')),
+        ];
+        return json(['code' => 200, 'message' => 'success', 'data' => $this->service->operationLogList($page, $pageSize, $filters)]);
+    }
+
     // ─── 登录（无需鉴权）────────────────────────────────
 
     public function login(Request $request): \think\Response
@@ -220,6 +236,20 @@ class Admin extends BaseController
         } catch (\InvalidArgumentException $e) {
             return json(['code' => 400, 'message' => $e->getMessage(), 'data' => null]);
         }
+    }
+
+    // ─── 排行榜查询 ───────────────────────────────────
+
+    public function leaderboardList(Request $request): \think\Response
+    {
+        $page = max(1, (int) $request->get('page', 1));
+        $pageSize = min(50, max(1, (int) $request->get('pageSize', 20)));
+        $userId = $request->get('user_id', '');
+        $userId = $userId !== '' ? (int) $userId : null;
+        $sortField = trim((string) $request->get('sort_field', ''));
+        $sortOrder = strtolower(trim((string) $request->get('sort_order', '')));
+        $sortOrder = in_array($sortOrder, ['asc', 'desc'], true) ? $sortOrder : 'desc';
+        return json(['code' => 200, 'message' => 'success', 'data' => $this->service->leaderboardList($this->getProject($request), $userId, $sortField, $sortOrder, $page, $pageSize)]);
     }
 
     // ─── 订单查询 ───────────────────────────────────────

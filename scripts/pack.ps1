@@ -38,6 +38,20 @@ if (-not (Test-Path -LiteralPath $builtHtml)) {
 }
 
 if ($needBuild) {
+    Write-Host "=== Cleaning old frontend assets ==="
+    $publicDir = Join-Path $Backend "public"
+    $oldAssets = Join-Path $publicDir "assets"
+    $oldHtml   = Join-Path $publicDir "index.html"
+    if (Test-Path -LiteralPath $oldAssets) {
+        Remove-Item -LiteralPath $oldAssets -Recurse -Force
+        Write-Host "  removed assets/"
+    }
+    if (Test-Path -LiteralPath $oldHtml) {
+        Remove-Item -LiteralPath $oldHtml -Force
+        Write-Host "  removed index.html"
+    }
+    Write-Host ""
+
     Write-Host "=== Building frontend ==="
     cmd /c "cd /d `"$Frontend`" && pnpm run build"
     if ($LASTEXITCODE -ne 0) { throw "Frontend build failed" }

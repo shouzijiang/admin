@@ -6,6 +6,8 @@ import Announcements from '../views/Announcements.vue'
 import UserLookup from '../views/UserLookup.vue'
 import MailSend from '../views/MailSend.vue'
 import StreamerSettlement from '../views/StreamerSettlement.vue'
+import LeaderboardQuery from '../views/LeaderboardQuery.vue'
+import OperationLog from '../views/OperationLog.vue'
 import OrderQuery from '../views/OrderQuery.vue'
 
 const routes = [
@@ -20,6 +22,8 @@ const routes = [
       { path: 'users', component: UserLookup },
       { path: 'streamer', component: StreamerSettlement },
       { path: 'mails', component: MailSend },
+      { path: 'leaderboard', component: LeaderboardQuery },
+      { path: 'logs', component: OperationLog },
       { path: 'orders', component: OrderQuery },
     ]
   },

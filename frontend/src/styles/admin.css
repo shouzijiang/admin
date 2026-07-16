@@ -1,16 +1,17 @@
-/* 后台全局布局与表格间距 —— 禁止整页系统滚动条，列表在表内滚动 */
-
+/* ─── 全局重置 & 基础 ───────────────────────────────────── */
 html,
 body,
 #app {
   height: 100%;
   margin: 0;
   overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
+/* ─── 主区域 ───────────────────────────────────────────── */
 .el-main {
-  padding: 20px 24px;
-  background: #f5f7fa;
+  padding: 24px 28px;
+  background: #f0f2f5;
   height: 100%;
   box-sizing: border-box;
   overflow-x: hidden;
@@ -18,11 +19,12 @@ body,
   min-height: 0;
 }
 
+/* 页面标题 */
 .el-main > div > h2 {
-  margin: 0 0 16px;
+  margin: 0 0 18px;
   font-size: 18px;
   font-weight: 600;
-  color: #303133;
+  color: #1d2129;
   line-height: 1.4;
   flex-shrink: 0;
 }
@@ -32,38 +34,58 @@ body,
   margin: 20px 0 12px;
   font-size: 15px;
   font-weight: 600;
-  color: #303133;
+  color: #1d2129;
   flex-shrink: 0;
 }
 
-/* 表格：略增行高与左右内边距，避免拥挤 */
-.el-table {
-  --el-table-header-bg-color: #fafafa;
-  --el-table-row-hover-bg-color: #f5f9ff;
+/* ─── 卡片 ─────────────────────────────────────────────── */
+.el-card {
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e8eaed;
+  transition: box-shadow 0.2s;
+}
+.el-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+.el-card__body {
+  padding: 20px 24px;
+}
+.el-card__header {
+  padding: 16px 24px;
+  border-bottom: 1px solid #f0f0f0;
+  font-weight: 600;
+  color: #1d2129;
 }
 
+/* ─── 表格 ─────────────────────────────────────────────── */
+.el-table {
+  --el-table-header-bg-color: #fafbfc;
+  --el-table-row-hover-bg-color: #f5f8ff;
+  --el-table-border-color: #e8eaed;
+  border-radius: 6px;
+  overflow: hidden;
+  font-size: 14px;
+}
+.el-table th.el-table__cell {
+  font-weight: 600;
+  color: #4e5969;
+  border-bottom: 2px solid #e8eaed;
+}
 .el-table .el-table__cell {
   padding: 12px 0;
 }
-
 .el-table .cell {
-  padding-left: 14px;
-  padding-right: 14px;
+  padding-left: 16px;
+  padding-right: 16px;
   line-height: 1.5;
 }
-
 .el-table--small .el-table__cell {
   padding: 8px 0;
 }
-
 .el-table--small .cell {
-  padding-left: 12px;
-  padding-right: 12px;
-}
-
-.el-table th.el-table__cell {
-  font-weight: 600;
-  color: #606266;
+  padding-left: 14px;
+  padding-right: 14px;
 }
 
 /* 操作列按钮间距 */
@@ -71,47 +93,70 @@ body,
   margin-left: 8px;
 }
 
-/* 表格上方工具栏、分页 */
-.el-table + .el-pagination,
+/* ─── 分页 ─────────────────────────────────────────────── */
 .el-pagination {
-  margin-top: 16px;
+  margin-top: 18px;
   flex-shrink: 0;
 }
 
-/* 描述列表间距与表格对齐 */
+/* ─── 描述列表 ─────────────────────────────────────────── */
 .el-descriptions {
   margin-bottom: 4px;
 }
-
 .el-descriptions .el-descriptions__cell {
-  padding: 12px 14px !important;
+  padding: 12px 16px !important;
 }
 
-/* 卡片内边距更舒适 */
-.el-card__body {
-  padding: 18px 20px;
-}
-
-.el-card__header {
-  padding: 14px 20px;
-}
-
-/* Tabs 与内容间距 */
+/* ─── Tabs ──────────────────────────────────────────────── */
 .el-tabs__header {
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 }
-
 .el-tabs__content {
   padding-top: 2px;
 }
 
-/* 分割线上下留白 */
+/* ─── 分割线 ───────────────────────────────────────────── */
 .el-divider {
-  margin: 20px 0;
+  margin: 22px 0;
 }
-
 .el-divider--horizontal.el-divider--content-left,
 .el-divider--horizontal.el-divider--content-center,
 .el-divider--horizontal.el-divider--content-right {
-  margin: 24px 0 16px;
+  margin: 26px 0 18px;
+}
+
+/* ─── 表单筛选行 ───────────────────────────────────────── */
+.el-form--inline .el-form-item {
+  margin-right: 20px;
+}
+.el-form--inline .el-form-item__label {
+  color: #4e5969;
+  font-weight: 500;
+}
+
+/* ─── 标签 ─────────────────────────────────────────────── */
+.el-tag {
+  border-radius: 3px;
+}
+
+/* ─── 按钮微调 ─────────────────────────────────────────── */
+.el-button {
+  border-radius: 4px;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+
+/* ─── 输入框微调 ───────────────────────────────────────── */
+.el-input__wrapper,
+.el-select .el-input__wrapper {
+  border-radius: 4px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+/* ─── 弹窗 ─────────────────────────────────────────────── */
+.el-dialog {
+  border-radius: 8px;
+}
+.el-message-box {
+  border-radius: 8px;
 }

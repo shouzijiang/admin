@@ -45,7 +45,11 @@ admin/
 │       │   ├── ActivityConfig.vue
 │       │   ├── Announcements.vue
 │       │   ├── UserLookup.vue
-│       │   └── MailSend.vue
+│       │   ├── LeaderboardQuery.vue
+│       │   ├── OperationLog.vue
+│       │   ├── MailSend.vue
+│       │   ├── OrderQuery.vue
+│       │   └── StreamerSettlement.vue
 │       ├── router/
 │       │   └── index.js      # 路由配置 + 鉴权守卫
 │       └── api/
@@ -67,6 +71,8 @@ admin/
 ├── 👤 用户查询     → /users           → UserLookup.vue
 ├── 💰 邀请结算     → /streamer        → StreamerSettlement.vue
 ├── ✉️ 邮件发送     → /mails           → MailSend.vue
+├── 🏆 排行榜查询   → /leaderboard     → LeaderboardQuery.vue
+├── 📜 操作日志     → /logs            → OperationLog.vue
 └── 🛒 订单查询     → /orders          → OrderQuery.vue
 
 独立页面:
@@ -156,7 +162,31 @@ admin/
 - **字段**: `scope` (all/user), `target_user_id`, `title`, `content`, `reward_type` (目前仅 `hint_quota`), `reward_amount`
 - **全服发奖**: `scope=all` 时通过 SQL 给 `users` 表当前所有用户 `pun_user_hint_quota.quota` 增量（与 think1 手工 `UPDATE pun_user_hint_quota` 一致）；之后新注册用户不会自动获得
 
-### 6. 🛒 订单查询 (Order Query)
+### 6. 🏆 排行榜查询 (Leaderboard Query)
+
+查询玩家各模式通关关卡数量，支持按用户ID筛选和分页。
+
+- **页面**: `/leaderboard` → `LeaderboardQuery.vue`
+- **数据库表**: `pun_game_level_progress` (项目库)
+- **API**:
+  - `GET /admin/leaderboard`  — 排行榜列表（分页 + 用户ID筛选）
+- **筛选条件**: `user_id` (精确匹配，留空查全部)
+- **字段**: `user_id`, `basic_count` (初级通关数), `classic_count` (经典通关数), `xhs_count` (小红书通关数), `story_count` (故事通关数), `song_count` (歌曲通关数), `updated_at` (更新时间)
+- **详情**: 通关数由 `passed_levels` JSON 数组长度计算得出，支持按各列排序
+
+### 8. 📜 操作日志 (Operation Log)
+
+记录所有管理后台的变更操作（POST/PUT/DELETE），自动捕获操作人、模块、接口路径、操作目标、请求参数、IP 和结果状态。
+
+- **页面**: `/logs` → `OperationLog.vue`
+- **数据库表**: `admin_operation_logs` (管理库 `qianzhi_admin`)
+- **API**:
+  - `GET /admin/operation-logs`  — 日志列表（分页 + 多条件筛选）
+- **筛选条件**: `module` (操作模块), `status` (success/fail), `date_start`/`date_end` (时间范围)
+- **字段**: `admin_name`, `module`, `method`, `path`, `target`, `after_val` (请求参数), `ip`, `status`, `created_at`
+- **自动记录**: 通过 `AdminRequestLog` 中间件自动写入，对所有认证后的 POST/PUT/DELETE 请求生效
+
+### 9. 🛒 订单查询 (Order Query)
 
 查询支付订单，支持多条件筛选和分页。
 
@@ -167,7 +197,7 @@ admin/
 - **筛选条件**: `order_no` (订单号模糊), `user_id` (精确), `status` (pending/paid/refunded/closed), `pay_type` (wx_jsapi/wx_virtual), `platform` (ios/android), `pay_channel` (wechat/apple), `date_start`/`date_end` (创建时间范围)
 - **字段**: `id`, `order_no`, `user_id`, `amount`, `description`, `pay_type`, `platform`, `pay_channel`, `status`, `product_id`, `extra`, `transaction_id`, `prepay_id`, `paid_at`, `created_at`
 
-### 7. 🔐 登录认证 (Login)
+### 10. 🔐 登录认证 (Login)
 
 - **页面**: `/login` → `Login.vue`
 - **API**: `POST /admin/login`
@@ -211,6 +241,8 @@ admin/
 | POST | `/admin/streamer/payouts` | 添加打款记录 |
 | GET | `/admin/mails` | 邮件历史列表 |
 | POST | `/admin/mails/send` | 发送邮件 |
+| GET | `/admin/leaderboard` | 排行榜列表（分页+筛选） |
+| GET | `/admin/operation-logs` | 操作日志列表（分页+筛选） |
 | GET | `/admin/orders` | 订单列表（分页+筛选） |
 
 <!-- API-END -->
@@ -224,6 +256,7 @@ admin/
 | 表名 | 说明 |
 |------|------|
 | `admin_users` | 管理员账户 (id, username, password, role, is_active) |
+| `admin_operation_logs` | 管理后台操作日志 | 操作日志 |
 
 ### 项目库 (`sofun_online`，默认项目 `think1`)
 
@@ -234,6 +267,7 @@ admin/
 | `users` | 终端用户 | 用户查询 |
 | `pun_user_hint_quota` | 用户提示额度 | 用户查询、邮件发送 |
 | `pun_game_rank` | 用户游戏排名 | 用户查询 |
+| `pun_game_level_progress` | 用户关卡进度 | 排行榜查询 |
 | `pun_game_mail` | 游戏内邮件记录 | 邮件发送 |
 | `pay_order` | 支付订单 | 订单查询 |
 

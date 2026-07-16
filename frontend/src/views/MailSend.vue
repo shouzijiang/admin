@@ -47,13 +47,13 @@
       </el-form>
     </el-card>
 
-    <h3>发送记录（最近 30 条）</h3>
+    <h3>发送记录 （最近 30 条）</h3>
     <el-table :data="mailList" border stripe max-height="360">
       <el-table-column prop="id" label="ID" width="60" />
-      <el-table-column prop="scope" label="范围" width="60">
+      <el-table-column prop="scope" label="范围" width="120">
         <template #default="{ row }">{{ row.scope === 'all' ? '全服' : '用户' }}</template>
       </el-table-column>
-      <el-table-column prop="target_user_id" label="目标用户" width="80" />
+      <el-table-column prop="target_user_id" label="目标用户" width="180" />
       <el-table-column prop="title" label="标题" />
       <el-table-column prop="created_at" label="发送时间" width="160" />
     </el-table>

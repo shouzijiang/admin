@@ -15,6 +15,43 @@ use think\facade\Db;
  */
 class AdminService
 {
+    // ─── 操作日志 ──────────────────────────────────────────
+
+    public function operationLogList(int $page = 1, int $pageSize = 20, array $filters = []): array
+    {
+        $q = Db::name('admin_operation_logs');
+
+        if (!empty($filters['admin_id'])) {
+            $q->where('admin_id', (int) $filters['admin_id']);
+        }
+        if (!empty($filters['module'])) {
+            $q->where('module', $filters['module']);
+        }
+        if (!empty($filters['status'])) {
+            $q->where('status', $filters['status']);
+        }
+        if (!empty($filters['date_start'])) {
+            $q->where('created_at', '>=', $filters['date_start'] . ' 00:00:00');
+        }
+        if (!empty($filters['date_end'])) {
+            $q->where('created_at', '<=', $filters['date_end'] . ' 23:59:59');
+        }
+
+        $total = $q->count();
+        $list = $q->order('id desc')->page($page, $pageSize)->select()->toArray();
+
+        // 关联管理员用户名
+        $adminIds = array_unique(array_column($list, 'admin_id'));
+        if ($adminIds) {
+            $admins = Db::name('admin_users')->whereIn('id', $adminIds)->column('username', 'id');
+            foreach ($list as &$row) {
+                $row['admin_name'] = $admins[(int) $row['admin_id']] ?? '未知';
+            }
+        }
+
+        return ['list' => $list, 'total' => $total];
+    }
+
     // ─── 登录 ──────────────────────────────────────────────
 
     public function login(string $username, string $password): ?array
@@ -150,7 +187,53 @@ class AdminService
             'gameRank' => $rank ?: null,
             'levelProgress' => $this->formatLevelProgress($progress),
             'vip' => $vip ?: null,
+            'rewardClaims' => $this->getUserRewardClaims($project, $userId),
         ];
+    }
+
+    private function getUserRewardClaims(string $project, int $userId): array
+    {
+        $rows = Db::connect($project)->name('pun_reward_claim_record')
+            ->where('user_id', $userId)
+            ->where('status', 'success')
+            ->group('claim_type')
+            ->field('claim_type, COUNT(*) AS cnt, SUM(add_quota) AS total_quota')
+            ->select()
+            ->toArray();
+
+        $labelMap = [
+            'share'                        => '分享领提示',
+            'reward_video'                 => '看广告领答案',
+            'daily_noon_hint_5'            => '午间答题奖励',
+            'daily_watch_ad_hint_1'        => '每日看广告任务',
+            'daily_battle_3_hint_3'        => '每日对战任务',
+            'daily_check_in'               => '每日签到',
+            'daily_check_in_makeup'        => '签到补签',
+            'daily_challenge'              => '每日挑战',
+            'vip_trial_3d'                 => 'VIP体验(3天)',
+            'vip_trial_7d'                 => 'VIP体验(7天)',
+            'album_unlock'                 => '解锁专辑',
+            'permanent_set_avatar'         => '设置头像',
+            'permanent_set_nickname'       => '设置昵称',
+            'permanent_my_mini_program_hint_3' => '收藏小程序',
+            'permanent_rate_app'           => '应用评分',
+        ];
+
+        $list = [];
+        foreach ($rows as $r) {
+            $type = $r['claim_type'];
+            $list[] = [
+                'type'  => $type,
+                'label' => $labelMap[$type] ?? $type,
+                'count' => (int) $r['cnt'],
+                'total_quota' => (int) ($r['total_quota'] ?? 0),
+            ];
+        }
+
+        // 按次数降序排列
+        usort($list, fn ($a, $b) => $b['count'] <=> $a['count']);
+
+        return $list;
     }
 
     public function updateUserHintQuota(string $project, int $userId, int $quota): void
@@ -548,6 +631,69 @@ class AdminService
     {
         if ($claimCount <= 0 || $total <= 0) return 0.0;
         return (float) bcdiv(number_format($total, 2, '.', ''), (string) $claimCount, self::CALC_AMOUNT_SCALE);
+    }
+
+    // ─── 排行榜查询 ──────────────────────────────────────
+
+    public function leaderboardList(string $project, ?int $userId, string $sortField, string $sortOrder, int $page = 1, int $pageSize = 20): array
+    {
+        $db = Db::connect($project);
+
+        // 排序字段映射：前端值 → 数据库 JSON 列名
+        $sortMap = [
+            'basic'   => 'passed_levels',
+            'classic' => 'passed_levels_mid',
+            'xhs'     => 'passed_levels_xhs',
+            'story'   => 'passed_levels_story',
+            'song'    => 'passed_levels_song',
+        ];
+
+        // ── 分别构建 count 和 data 查询，避免 count() 污染 select() ──
+
+        $countQ = $db->name('pun_game_level_progress');
+        $dataQ  = $db->name('pun_game_level_progress');
+
+        if ($userId !== null && $userId > 0) {
+            $countQ->where('user_id', $userId);
+            $dataQ->where('user_id', $userId);
+        }
+
+        $total = $countQ->count();
+
+        if ($sortField !== '' && isset($sortMap[$sortField])) {
+            $dbField = $sortMap[$sortField];
+            $dataQ->orderRaw("JSON_LENGTH({$dbField}) {$sortOrder}, user_id desc");
+        } else {
+            $dataQ->order('user_id', $sortOrder);
+        }
+
+        $rows = $dataQ->page($page, $pageSize)->select()->toArray();
+
+        $list = array_map(function ($row) {
+            return [
+                'user_id'       => (int) $row['user_id'],
+                'basic_count'   => $this->countJsonArray($row['passed_levels'] ?? null),
+                'classic_count' => $this->countJsonArray($row['passed_levels_mid'] ?? null),
+                'xhs_count'     => $this->countJsonArray($row['passed_levels_xhs'] ?? null),
+                'story_count'   => $this->countJsonArray($row['passed_levels_story'] ?? null),
+                'song_count'    => $this->countJsonArray($row['passed_levels_song'] ?? null),
+                'updated_at'    => $row['updated_at'] ?? ($row['created_at'] ?? ''),
+            ];
+        }, $rows);
+
+        return ['list' => $list, 'total' => $total];
+    }
+
+    private function countJsonArray($value): int
+    {
+        if (is_string($value) && $value !== '') {
+            $decoded = json_decode($value, true);
+            return is_array($decoded) ? count($decoded) : 0;
+        }
+        if (is_array($value)) {
+            return count($value);
+        }
+        return 0;
     }
 
     // ─── 订单查询 ──────────────────────────────────────────
