@@ -97,7 +97,7 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column prop="created_at" label="发送时间" width="150" />
+            <el-table-column prop="created_at" label="发送时间" width="220" />
             <el-table-column label="操作" width="140" fixed="right">
               <template #default="{ row }">
                 <el-button size="small" @click="openDetail(row)">详情</el-button>
@@ -293,7 +293,7 @@ async function send() {
 
 <style scoped>
 .mail-page {
-  height: calc(100vh - 40px);
+  height: calc(100vh - 60px);
   display: flex;
   flex-direction: column;
   overflow: hidden;

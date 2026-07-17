@@ -49,7 +49,7 @@
           <el-tag size="small" :type="methodTag(row.method)">{{ row.method }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="path" label="接口路径" min-width="190" show-overflow-tooltip />
+      <el-table-column prop="path" label="接口路径" min-width="160" show-overflow-tooltip />
       <el-table-column prop="target" label="操作目标" width="140" show-overflow-tooltip />
       <el-table-column label="变更后值" min-width="200" show-overflow-tooltip>
         <template #default="{ row }">
@@ -86,7 +86,7 @@
     </div>
 
     <!-- 详情抽屉 -->
-    <el-drawer v-model="drawerVisible" title="操作详情" direction="rtl" size="520px">
+    <el-drawer v-model="drawerVisible" title="操作详情" direction="rtl" size="1220px">
       <template v-if="currentLog">
         <el-descriptions :column="1" border size="small">
           <el-descriptions-item label="ID">{{ currentLog.id }}</el-descriptions-item>
