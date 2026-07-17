@@ -639,61 +639,68 @@ class AdminService
     {
         $db = Db::connect($project);
 
-        // 排序字段映射：前端值 → 数据库 JSON 列名
-        $sortMap = [
-            'basic'   => 'passed_levels',
-            'classic' => 'passed_levels_mid',
-            'xhs'     => 'passed_levels_xhs',
-            'story'   => 'passed_levels_story',
-            'song'    => 'passed_levels_song',
+        $fieldMap = [
+            'basic'   => 'max_level',
+            'classic' => 'max_level_mid',
+            'xhs'     => 'max_level_xhs',
+            'story'   => 'max_level_story',
+            'song'    => 'max_level_song',
         ];
 
-        // ── 分别构建 count 和 data 查询，避免 count() 污染 select() ──
+        $fields = 'user_id, max_level, max_level_mid, max_level_xhs, max_level_story, max_level_song, updated_at';
 
-        $countQ = $db->name('pun_game_level_progress');
-        $dataQ  = $db->name('pun_game_level_progress');
-
+        // ── count ──
+        $countSql = 'SELECT COUNT(*) AS cnt FROM pun_game_rank';
+        $countParams = [];
         if ($userId !== null && $userId > 0) {
-            $countQ->where('user_id', $userId);
-            $dataQ->where('user_id', $userId);
+            $countSql .= ' WHERE user_id = ?';
+            $countParams[] = $userId;
+        }
+        $total = (int) ($db->query($countSql, $countParams)[0]['cnt'] ?? 0);
+
+        // ── data ──
+        $offset = ($page - 1) * $pageSize;
+        $dataSql = "SELECT {$fields} FROM pun_game_rank";
+        $dataParams = [];
+        if ($userId !== null && $userId > 0) {
+            $dataSql .= ' WHERE user_id = ?';
+            $dataParams[] = $userId;
         }
 
-        $total = $countQ->count();
-
-        if ($sortField !== '' && isset($sortMap[$sortField])) {
-            $dbField = $sortMap[$sortField];
-            $dataQ->orderRaw("JSON_LENGTH({$dbField}) {$sortOrder}, user_id desc");
-        } else {
-            $dataQ->order('user_id', $sortOrder);
+        // 排序
+        $orderClauses = [];
+        if ($sortField !== '' && isset($fieldMap[$sortField])) {
+            $dbField = $fieldMap[$sortField];
+            $orderClauses[] = "{$dbField} {$sortOrder}";
         }
+        $orderClauses[] = "user_id DESC";
+        $dataSql .= ' ORDER BY ' . implode(', ', $orderClauses);
 
-        $rows = $dataQ->page($page, $pageSize)->select()->toArray();
+        $dataSql .= ' LIMIT ?, ?';
+        $dataParams[] = $offset;
+        $dataParams[] = $pageSize;
+
+        $rows = $db->query($dataSql, $dataParams);
 
         $list = array_map(function ($row) {
             return [
                 'user_id'       => (int) $row['user_id'],
-                'basic_count'   => $this->countJsonArray($row['passed_levels'] ?? null),
-                'classic_count' => $this->countJsonArray($row['passed_levels_mid'] ?? null),
-                'xhs_count'     => $this->countJsonArray($row['passed_levels_xhs'] ?? null),
-                'story_count'   => $this->countJsonArray($row['passed_levels_story'] ?? null),
-                'song_count'    => $this->countJsonArray($row['passed_levels_song'] ?? null),
-                'updated_at'    => $row['updated_at'] ?? ($row['created_at'] ?? ''),
+                'basic_count'   => (int) ($row['max_level'] ?? 0),
+                'classic_count' => (int) ($row['max_level_mid'] ?? -1),
+                'xhs_count'     => (int) ($row['max_level_xhs'] ?? -1),
+                'story_count'   => (int) ($row['max_level_story'] ?? 0),
+                'song_count'    => (int) ($row['max_level_song'] ?? 0),
+                'updated_at'    => $row['updated_at'] ?? '',
             ];
         }, $rows);
 
         return ['list' => $list, 'total' => $total];
     }
 
+    // countJsonArray 保留（其他地方可能使用）
     private function countJsonArray($value): int
     {
-        if (is_string($value) && $value !== '') {
-            $decoded = json_decode($value, true);
-            return is_array($decoded) ? count($decoded) : 0;
-        }
-        if (is_array($value)) {
-            return count($value);
-        }
-        return 0;
+        return count($this->decodeLevelIdList($value));
     }
 
     // ─── 订单查询 ──────────────────────────────────────────
@@ -735,10 +742,27 @@ class AdminService
 
     // ─── 邮件管理 ──────────────────────────────────────────
 
-    public function mailList(string $project, int $page = 1, int $pageSize = 20): array
+    public function mailList(string $project, int $page = 1, int $pageSize = 20, array $filters = []): array
     {
-        $total = Db::connect($project)->name('pun_game_mail')->count();
-        $list = Db::connect($project)->name('pun_game_mail')->order('created_at desc')->page($page, $pageSize)->select()->toArray();
+        $query = Db::connect($project)->name('pun_game_mail');
+
+        // 状态筛选：is_published 1=上线 0=下架
+        if (isset($filters['status']) && $filters['status'] !== '') {
+            $query->where('is_published', (int) $filters['status']);
+        }
+
+        // 范围筛选：all=全服 user=用户
+        if (!empty($filters['scope'])) {
+            $query->where('scope', $filters['scope']);
+        }
+
+        // 标题关键词搜索
+        if (!empty($filters['keyword'])) {
+            $query->where('title', 'like', '%' . $filters['keyword'] . '%');
+        }
+
+        $total = $query->count();
+        $list = $query->order('created_at desc')->page($page, $pageSize)->select()->toArray();
         return ['list' => $list, 'total' => $total];
     }
 

@@ -157,9 +157,9 @@ admin/
 - **页面**: `/mails` → `MailSend.vue`
 - **数据库表**: `pun_game_mail`, `pun_user_hint_quota` (项目库)
 - **API**:
-  - `GET  /admin/mails`        — 邮件历史列表
+  - `GET  /admin/mails`        — 邮件历史列表（支持 status/scope/keyword 筛选，分页）
   - `POST /admin/mails/send`   — 发送邮件
-- **字段**: `scope` (all/user), `target_user_id`, `title`, `content`, `reward_type` (目前仅 `hint_quota`), `reward_amount`
+- **字段**: `scope` (all/user), `target_user_id`, `title`, `content`, `is_published` (1=上线 / 0=下架), `reward_type` (目前仅 `hint_quota`), `reward_amount`
 - **全服发奖**: `scope=all` 时通过 SQL 给 `users` 表当前所有用户 `pun_user_hint_quota.quota` 增量（与 think1 手工 `UPDATE pun_user_hint_quota` 一致）；之后新注册用户不会自动获得
 
 ### 6. 🏆 排行榜查询 (Leaderboard Query)
@@ -239,7 +239,7 @@ admin/
 | POST | `/admin/streamer/unit-prices/sync` | 重算单日单价 |
 | GET | `/admin/streamer/settlement` | 邀请人结算详情 |
 | POST | `/admin/streamer/payouts` | 添加打款记录 |
-| GET | `/admin/mails` | 邮件历史列表 |
+| GET | `/admin/mails` | 邮件历史列表（分页+筛选） |
 | POST | `/admin/mails/send` | 发送邮件 |
 | GET | `/admin/leaderboard` | 排行榜列表（分页+筛选） |
 | GET | `/admin/operation-logs` | 操作日志列表（分页+筛选） |

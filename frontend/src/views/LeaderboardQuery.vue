@@ -39,12 +39,12 @@
           <el-link type="primary" @click="goToUser(row.user_id)">{{ row.user_id }}</el-link>
         </template>
       </el-table-column>
-      <el-table-column prop="basic_count" label="初级通关数" width="120" />
-      <el-table-column prop="classic_count" label="经典通关数" width="120" />
-      <el-table-column prop="xhs_count" label="小红书通关数" width="130" />
-      <el-table-column prop="story_count" label="故事通关数" width="120" />
-      <el-table-column prop="song_count" label="歌曲通关数" width="120" />
-      <el-table-column label="总通关数" width="110">
+      <el-table-column prop="basic_count" label="初级最高关" width="140" sortable />
+      <el-table-column prop="classic_count" label="经典最高关" width="140" sortable />
+      <el-table-column prop="xhs_count" label="小红书最高关" width="160" sortable />
+      <el-table-column prop="story_count" label="故事最高关" width="140" sortable />
+      <el-table-column prop="song_count" label="歌曲最高关" width="140" sortable />
+      <el-table-column label="综合" width="100">
         <template #default="{ row }">
           {{ totalCount(row) }}
         </template>
@@ -87,7 +87,8 @@ const filters = ref({
 })
 
 function totalCount(row) {
-  return (row.basic_count || 0) + (row.classic_count || 0) + (row.xhs_count || 0) + (row.story_count || 0) + (row.song_count || 0)
+  const sum = (a, b) => Math.max(0, a) + Math.max(0, b)
+  return [row.basic_count, row.classic_count, row.xhs_count, row.story_count, row.song_count].reduce(sum, 0)
 }
 
 async function fetchList() {

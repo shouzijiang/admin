@@ -277,7 +277,12 @@ class Admin extends BaseController
     {
         $page = max(1, (int) $request->get('page', 1));
         $pageSize = min(50, max(1, (int) $request->get('pageSize', 20)));
-        return json(['code' => 200, 'message' => 'success', 'data' => $this->service->mailList($this->getProject($request), $page, $pageSize)]);
+        $filters = [
+            'status'  => $request->get('status', ''),
+            'scope'   => $request->get('scope', ''),
+            'keyword' => $request->get('keyword', ''),
+        ];
+        return json(['code' => 200, 'message' => 'success', 'data' => $this->service->mailList($this->getProject($request), $page, $pageSize, $filters)]);
     }
 
     public function mailSend(Request $request): \think\Response

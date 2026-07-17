@@ -49,7 +49,7 @@
           <el-tag size="small" :type="methodTag(row.method)">{{ row.method }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="path" label="接口路径" min-width="180" show-overflow-tooltip />
+      <el-table-column prop="path" label="接口路径" min-width="190" show-overflow-tooltip />
       <el-table-column prop="target" label="操作目标" width="140" show-overflow-tooltip />
       <el-table-column label="变更后值" min-width="200" show-overflow-tooltip>
         <template #default="{ row }">
@@ -58,7 +58,7 @@
         </template>
       </el-table-column>
       <el-table-column prop="ip" label="IP" width="140" />
-      <el-table-column prop="status" label="状态" width="70">
+      <el-table-column prop="status" label="状态" width="90">
         <template #default="{ row }">
           <el-tag size="small" :type="row.status === 'success' ? 'success' : 'danger'">
             {{ row.status === 'success' ? '成功' : '失败' }}
