@@ -38,6 +38,10 @@
           <span class="menu-icon">🛒</span>
           <span>订单查询</span>
         </el-menu-item>
+        <el-menu-item index="/feedbacks">
+          <span class="menu-icon">💬</span>
+          <span>意见反馈</span>
+        </el-menu-item>
       </el-menu>
       <div class="logout" @click="logout">
         <span>退出登录</span>

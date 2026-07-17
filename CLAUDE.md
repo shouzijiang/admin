@@ -1,5 +1,11 @@
 # CLAUDE.md
 
+## 行为规则
+
+**每次遇到报错并修复后，必须将原因和正确做法记录到本文档**，避免重复踩坑。记录格式：报错信息 → 原因 → 正确做法。
+
+---
+
 ## 项目概述
 
 千帜游 游戏管理后台。ThinkPHP 8 后端 + Vue 3 + Element Plus 前端，自定义 JWT 认证。
@@ -59,3 +65,18 @@ README 中有以下标记区域需要同步更新：
 - 默认项目 key：`think1`，对应数据库 `sofun_online`
 - 前端 API 代理：Vite dev server (3000) → `/admin` → backend (8787)
 - 前端路由：Hash 模式 (`createWebHashHistory`)
+
+## 生产环境 ThinkPHP 版本限制
+
+生产服务器 ThinkPHP 8 部分 API 与本地不同，以下方法**不支持** Closure 参数，必须用字符串：
+
+| 方法 | ❌ 不支持 | ✅ 必须用 |
+|------|-----------|-----------|
+| `leftJoin($table, $condition)` | `function ($join) { $join->whereColumn(...) }` | `'m.col = f.col AND m.x > f.y'` 字符串 |
+| `rightJoin($table, $condition)` | 同上 Closure | 同上字符串 |
+
+> 本地 dev 可能兼容 Closure，但生产会报 `Argument #2 must be of type ?string, Closure given`。
+
+## 游戏库表结构参考
+
+游戏库（`think1` / `sofun_online`）DDL 不在本项目的 `docs/database.sql` 中，而在 **`E:\php\think1\backend\docs\database.sql`**。新增功能前先到该文件确认表字段，避免按不存在的字段写 SQL。

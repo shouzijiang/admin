@@ -73,7 +73,8 @@ admin/
 ├── ✉️ 邮件发送     → /mails           → MailSend.vue
 ├── 🏆 排行榜查询   → /leaderboard     → LeaderboardQuery.vue
 ├── 📜 操作日志     → /logs            → OperationLog.vue
-└── 🛒 订单查询     → /orders          → OrderQuery.vue
+├── 🛒 订单查询     → /orders          → OrderQuery.vue
+├── 💬 意见反馈     → /feedbacks       → Feedback.vue
 
 独立页面:
 └── 🔐 登录         → /login           → Login.vue
@@ -198,7 +199,21 @@ admin/
 - **筛选条件**: `order_no` (订单号模糊), `user_id` (精确), `status` (pending/paid/refunded/closed), `pay_type` (wx_jsapi/wx_virtual), `platform` (ios/android), `pay_channel` (wechat/apple), `date_start`/`date_end` (创建时间范围)
 - **字段**: `id`, `order_no`, `user_id`, `amount`, `description`, `pay_type`, `platform`, `pay_channel`, `status`, `product_id`, `extra`, `transaction_id`, `prepay_id`, `paid_at`, `created_at`
 
-### 10. 🔐 登录认证 (Login)
+### 10. 💬 意见反馈 (Feedback)
+
+管理用户提交的意见反馈，支持状态标记和回复（模板/手动），回复时自动发送游戏内邮件并发放解字奖励。
+
+- **页面**: `/feedbacks` → `Feedback.vue`
+- **数据库表**: `pun_game_feedback`, `pun_game_mail`, `pun_user_hint_quota` (项目库)
+- **API**:
+  - `GET  /admin/feedbacks`         — 反馈列表（分页 + 关键字筛选）
+  - `POST /admin/feedbacks/reply`   — 回复反馈 (`id`, `content`, `quota_add`，默认3次)
+- **字段**: `id`, `user_id`, `type`, `content`, `contact`, `replied` (0=未回复/1=已回复), `replied_at`, `created_at`
+- **回复状态**: `replied` 字段标记，回复操作时写入；回复内容通过 LEFT JOIN `pun_game_mail` 展示
+- **处理状态**: 不入库，纯前端本地 switch 标记，刷新后重置
+- **回复流程**: 选择模板或手动填写回复内容 → 确认解字奖励次数 → 提交 → 插入 `pun_game_mail` 邮件 + 发放 `pun_user_hint_quota` 解字次数（不修改 `pun_game_feedback` 表）
+
+### 11. 🔐 登录认证 (Login)
 
 - **页面**: `/login` → `Login.vue`
 - **API**: `POST /admin/login`
@@ -246,6 +261,8 @@ admin/
 | GET | `/admin/leaderboard` | 排行榜列表（分页+筛选） |
 | GET | `/admin/operation-logs` | 操作日志列表（分页+筛选） |
 | GET | `/admin/orders` | 订单列表（分页+筛选） |
+| GET | `/admin/feedbacks` | 反馈列表（分页+筛选） |
+| POST | `/admin/feedbacks/reply` | 回复反馈并发放奖励 |
 
 <!-- API-END -->
 
@@ -271,6 +288,7 @@ admin/
 | `pun_game_rank` | 用户游戏排名 | 用户查询 |
 | `pun_game_level_progress` | 用户关卡进度 | 排行榜查询 |
 | `pun_game_mail` | 游戏内邮件记录 | 邮件发送 |
+| `pun_game_feedback` | 用户意见反馈 | 意见反馈 |
 | `pay_order` | 支付订单 | 订单查询 |
 
 ---

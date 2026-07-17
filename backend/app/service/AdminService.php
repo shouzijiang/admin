@@ -170,7 +170,7 @@ class AdminService
     public function userDetail(string $project, int $userId): ?array
     {
         $user = Db::connect($project)->name('users')->where('id', $userId)
-            ->field('id, openid, mp_platform, nickname, avatar, channel, channel_at, last_login_at, created_at')->find();
+            ->field('id, openid, mp_platform, nickname, avatar, channel, channel_at, last_login_at, remark, created_at')->find();
         if (!$user) return null;
 
         $quota = Db::connect($project)->name('pun_user_hint_quota')->where('user_id', $userId)
@@ -419,6 +419,35 @@ class AdminService
                 'expire_at' => $expireAt,
                 'trial_used' => 0,
                 'remark' => '',
+            ]);
+        }
+    }
+
+    public function updateUserRemark(string $project, int $userId, string $userRemark, string $vipRemark): void
+    {
+        if (!Db::connect($project)->name('users')->where('id', $userId)->find()) {
+            throw new \InvalidArgumentException('用户不存在');
+        }
+
+        $db = Db::connect($project);
+        $now = date('Y-m-d H:i:s');
+
+        // 更新 users.remark
+        $db->name('users')->where('id', $userId)->update([
+            'remark' => $userRemark,
+            'updated_at' => $now,
+        ]);
+
+        // 更新 pun_vip.remark
+        $existing = $db->name('pun_vip')->where('user_id', $userId)->find();
+        if ($existing) {
+            $db->name('pun_vip')->where('user_id', $userId)->update(['remark' => $vipRemark]);
+        } else {
+            $db->name('pun_vip')->insert([
+                'user_id' => $userId,
+                'expire_at' => null,
+                'trial_used' => 0,
+                'remark' => $vipRemark,
             ]);
         }
     }
@@ -851,5 +880,73 @@ class AdminService
         );
 
         return $count;
+    }
+
+    // ─── 意见反馈 ───────────────────────────────────────
+
+    public function feedbackList(string $project, int $page, int $pageSize, string $keyword, ?int $status = null): array
+    {
+        $db = Db::connect($project);
+        $query = $db->name('pun_game_feedback')->alias('f');
+        if ($keyword !== '') {
+            $query->where('f.content', 'like', '%' . $keyword . '%');
+        }
+        if ($status !== null) {
+            $query->where('f.replied', $status);
+        }
+
+        $total = $query->count();
+        $list = $query
+            ->leftJoin('pun_game_mail m', 'm.id = f.mail_id')
+            ->field('f.*, m.content AS reply_content')
+            ->order('f.id desc')->page($page, $pageSize)->select()->toArray();
+
+        return ['list' => $list, 'total' => $total];
+    }
+
+    public function replyFeedback(string $project, int $id, string $content, int $quotaAdd): array
+    {
+        $feedback = Db::connect($project)->name('pun_game_feedback')->where('id', $id)->find();
+        if (!$feedback) throw new \InvalidArgumentException('反馈记录不存在');
+
+        $userId = (int) $feedback['user_id'];
+        $now = date('Y-m-d H:i:s');
+
+        // 插入游戏内邮件
+        $mailId = Db::connect($project)->name('pun_game_mail')->insertGetId([
+            'scope'          => 'user',
+            'target_user_id' => $userId,
+            'sender_user_id' => null,
+            'title'          => 'bug反馈回复',
+            'content'        => $content,
+            'is_published'   => 1,
+            'created_at'     => $now,
+        ]);
+
+        // 发放解字次数
+        if ($quotaAdd > 0) {
+            $this->grantHintQuotaToUser($project, $userId, $quotaAdd);
+        }
+
+        // 标记反馈为已回复，记录 mail_id 便于后续编辑
+        Db::connect($project)->name('pun_game_feedback')->where('id', $id)->update([
+            'replied'    => 1,
+            'replied_at' => $now,
+            'mail_id'    => $mailId,
+        ]);
+
+        return ['user_id' => $userId, 'quota_add' => $quotaAdd];
+    }
+
+    public function updateFeedbackReply(string $project, int $id, string $content): void
+    {
+        $feedback = Db::connect($project)->name('pun_game_feedback')->where('id', $id)->find();
+        if (!$feedback) throw new \InvalidArgumentException('反馈记录不存在');
+        if (empty($feedback['mail_id'])) throw new \InvalidArgumentException('未找到关联回复邮件');
+
+        Db::connect($project)->name('pun_game_mail')->where('id', (int) $feedback['mail_id'])->update([
+            'content'    => $content,
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
     }
 }

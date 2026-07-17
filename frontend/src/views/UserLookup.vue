@@ -40,6 +40,8 @@
         <el-descriptions-item label="渠道绑定时间">{{ detail.user.channel_at || '—' }}</el-descriptions-item>
         <el-descriptions-item label="VIP到期" v-if="detail.vip">{{ detail.vip.expire_at || '永久' }}</el-descriptions-item>
         <el-descriptions-item label="VIP到期" v-else>—</el-descriptions-item>
+        <el-descriptions-item label="用户备注">{{ detail.user.remark || '—' }}</el-descriptions-item>
+        <el-descriptions-item label="VIP备注">{{ (detail.vip && detail.vip.remark) || '—' }}</el-descriptions-item>
       </el-descriptions>
 
       <!-- Row 1: 解字次数 | VIP -->
@@ -76,6 +78,26 @@
               </el-form-item>
               <el-form-item>
                 <el-button type="primary" :loading="savingVip" @click="saveVip" size="small">保存</el-button>
+              </el-form-item>
+            </el-form>
+          </el-card>
+        </el-col>
+      </el-row>
+
+      <!-- Row 2: 备注 -->
+      <el-row :gutter="16" class="section-row">
+        <el-col :span="24">
+          <el-card shadow="never">
+            <template #header>备注</template>
+            <el-form :inline="true" class="compact-form">
+              <el-form-item label="用户备注">
+                <el-input v-model="editUserRemark" placeholder="用户备注" size="small" style="width:220px" clearable />
+              </el-form-item>
+              <el-form-item label="VIP备注">
+                <el-input v-model="editVipRemark" placeholder="VIP备注" size="small" style="width:220px" clearable />
+              </el-form-item>
+              <el-form-item>
+                <el-button type="primary" :loading="savingRemark" @click="saveRemark" size="small">保存备注</el-button>
               </el-form-item>
             </el-form>
           </el-card>
@@ -204,6 +226,9 @@ const progressTab = ref('beginner')
 const savingQuota = ref(false)
 const savingVip = ref(false)
 const savingProgress = ref(false)
+const savingRemark = ref(false)
+const editUserRemark = ref('')
+const editVipRemark = ref('')
 
 function levelsToText(list) {
   return (list || []).join(',')
@@ -220,6 +245,8 @@ function platformLabel(val) {
 function initEditForms(data) {
   editQuota.value = data.quota?.quota ?? 0
   editExpireAt.value = data.vip?.expire_at || null
+  editUserRemark.value = data.user?.remark || ''
+  editVipRemark.value = data.vip?.remark || ''
   const rank = data.gameRank || {}
   const progress = data.levelProgress || {}
   editRank.value = {
@@ -332,6 +359,24 @@ async function saveProgress() {
     }
   } finally {
     savingProgress.value = false
+  }
+}
+
+async function saveRemark() {
+  if (!detail.value) return
+  savingRemark.value = true
+  try {
+    const res = await http.post('/admin/users/remark', {
+      user_id: detail.value.user.id,
+      user_remark: editUserRemark.value,
+      vip_remark: editVipRemark.value,
+    })
+    if (res.code === 200) {
+      ElMessage.success('备注已更新')
+      await loadDetail(detail.value.user.id)
+    }
+  } finally {
+    savingRemark.value = false
   }
 }
 

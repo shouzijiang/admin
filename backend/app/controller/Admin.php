@@ -175,6 +175,20 @@ class Admin extends BaseController
         }
     }
 
+    public function userUpdateRemark(Request $request): \think\Response
+    {
+        $uid = (int) $request->post('user_id', 0);
+        if ($uid <= 0) return json(['code' => 400, 'message' => '缺少用户ID', 'data' => null]);
+        try {
+            $userRemark = trim((string) $request->post('user_remark', ''));
+            $vipRemark = trim((string) $request->post('vip_remark', ''));
+            $this->service->updateUserRemark($this->getProject($request), $uid, $userRemark, $vipRemark);
+            return json(['code' => 200, 'message' => '备注已更新', 'data' => null]);
+        } catch (\InvalidArgumentException $e) {
+            return json(['code' => 400, 'message' => $e->getMessage(), 'data' => null]);
+        }
+    }
+
     // ─── 邀请结算 ───────────────────────────────────────
 
     public function channelUnitPriceList(Request $request): \think\Response
@@ -312,6 +326,51 @@ class Admin extends BaseController
             }
             $this->service->updateMail($this->getProject($request), $id, $request->post());
             return json(['code' => 200, 'message' => '更新成功', 'data' => null]);
+        } catch (\InvalidArgumentException $e) {
+            return json(['code' => 400, 'message' => $e->getMessage(), 'data' => null]);
+        }
+    }
+
+    // ─── 意见反馈 ───────────────────────────────────────
+
+    public function feedbackList(Request $request): \think\Response
+    {
+        $page = max(1, (int) $request->get('page', 1));
+        $pageSize = min(50, max(1, (int) $request->get('pageSize', 20)));
+        $keyword = trim((string) $request->get('keyword', ''));
+        $status = $request->get('status', '');
+        $status = ($status !== '') ? (int) $status : null;
+        return json(['code' => 200, 'message' => 'success', 'data' => $this->service->feedbackList($this->getProject($request), $page, $pageSize, $keyword, $status)]);
+    }
+
+    public function feedbackReply(Request $request): \think\Response
+    {
+        try {
+            $id = (int) $request->post('id', 0);
+            if ($id <= 0) return json(['code' => 400, 'message' => '缺少反馈ID', 'data' => null]);
+            $content = trim((string) $request->post('content', ''));
+            if ($content === '') return json(['code' => 400, 'message' => '请填写回复内容', 'data' => null]);
+            $quotaAdd = max(0, (int) $request->post('quota_add', 3));
+            $result = $this->service->replyFeedback($this->getProject($request), $id, $content, $quotaAdd);
+            $message = '回复已发送';
+            if (($result['quota_add'] ?? 0) > 0) {
+                $message .= sprintf('，已发放 %d 次解字奖励', $result['quota_add']);
+            }
+            return json(['code' => 200, 'message' => $message, 'data' => $result]);
+        } catch (\InvalidArgumentException $e) {
+            return json(['code' => 400, 'message' => $e->getMessage(), 'data' => null]);
+        }
+    }
+
+    public function feedbackReplyUpdate(Request $request): \think\Response
+    {
+        try {
+            $id = (int) $request->post('id', 0);
+            if ($id <= 0) return json(['code' => 400, 'message' => '缺少反馈ID', 'data' => null]);
+            $content = trim((string) $request->post('content', ''));
+            if ($content === '') return json(['code' => 400, 'message' => '请填写回复内容', 'data' => null]);
+            $this->service->updateFeedbackReply($this->getProject($request), $id, $content);
+            return json(['code' => 200, 'message' => '回复内容已更新', 'data' => null]);
         } catch (\InvalidArgumentException $e) {
             return json(['code' => 400, 'message' => $e->getMessage(), 'data' => null]);
         }

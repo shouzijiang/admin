@@ -19,6 +19,7 @@ Route::group('admin', function () {
         Route::post('users/quota', 'Admin/userUpdateQuota');
         Route::post('users/progress', 'Admin/userUpdateProgress');
         Route::post('users/vip', 'Admin/userUpdateVip');
+        Route::post('users/remark', 'Admin/userUpdateRemark');
         Route::get('streamer/unit-prices', 'Admin/channelUnitPriceList');
         Route::post('streamer/unit-prices', 'Admin/channelUnitPriceSave');
         Route::post('streamer/unit-prices/sync', 'Admin/channelUnitPriceSync');
@@ -27,6 +28,9 @@ Route::group('admin', function () {
         Route::get('mails', 'Admin/mailList');
         Route::post('mails/send', 'Admin/mailSend');
         Route::post('mails/update', 'Admin/mailUpdate');
+        Route::get('feedbacks', 'Admin/feedbackList');
+        Route::post('feedbacks/reply', 'Admin/feedbackReply');
+        Route::post('feedbacks/reply/update', 'Admin/feedbackReplyUpdate');
         Route::get('operation-logs', 'Admin/operationLogList');
         Route::get('leaderboard', 'Admin/leaderboardList');
         Route::get('orders', 'Admin/orderList');

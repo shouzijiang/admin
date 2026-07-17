@@ -9,6 +9,7 @@ import StreamerSettlement from '../views/StreamerSettlement.vue'
 import LeaderboardQuery from '../views/LeaderboardQuery.vue'
 import OperationLog from '../views/OperationLog.vue'
 import OrderQuery from '../views/OrderQuery.vue'
+import Feedback from '../views/Feedback.vue'
 
 const routes = [
   { path: '/login', component: Login },
@@ -25,6 +26,7 @@ const routes = [
       { path: 'leaderboard', component: LeaderboardQuery },
       { path: 'logs', component: OperationLog },
       { path: 'orders', component: OrderQuery },
+      { path: 'feedbacks', component: Feedback },
     ]
   },
 ]
