@@ -29,33 +29,20 @@ class AdminRequestLog
         'feedbacks'      => '意见反馈',
     ];
 
-    /** 路径→操作名 映射 */
+    /** 路径→操作名 映射（仅增删改） */
     private const PATH_ACTION_MAP = [
-        'activity-float'           => ['GET' => '查看活动配置', 'POST' => '保存活动配置', 'DELETE' => '删除活动配置'],
-        'announcements'            => ['GET' => '查看公告列表', 'POST' => '保存公告', 'DELETE' => '下架公告'],
-        'users/search'             => ['GET' => '搜索用户'],
-        'users/detail'             => ['GET' => '查看用户详情'],
+        'activity-float'           => ['POST' => '保存活动配置', 'DELETE' => '删除活动配置'],
+        'announcements'            => ['POST' => '保存公告', 'DELETE' => '下架公告'],
         'users/quota'              => ['POST' => '修改解字次数'],
         'users/progress'           => ['POST' => '修改通关记录'],
         'users/vip'                => ['POST' => '修改VIP'],
         'users/remark'             => ['POST' => '修改备注'],
-        'streamer/unit-prices'     => ['GET' => '查看单价列表', 'POST' => '录入单价', 'POST(sync)' => '同步单价'],
-        'streamer/settlement'      => ['GET' => '查看结算详情'],
+        'streamer/unit-prices'     => ['POST' => '录入单价', 'POST(sync)' => '同步单价'],
         'streamer/payouts'         => ['POST' => '添加打款'],
-        'mails'                    => ['GET' => '查看邮件列表'],
         'mails/send'               => ['POST' => '发送邮件'],
         'mails/update'             => ['POST' => '更新邮件'],
-        'feedbacks'                => ['GET' => '查看反馈列表'],
         'feedbacks/reply'          => ['POST' => '回复反馈'],
         'feedbacks/reply/update'   => ['POST' => '更新反馈回复'],
-        'leaderboard'              => ['GET' => '查看排行榜'],
-        'orders'                   => ['GET' => '查看订单列表'],
-    ];
-
-    /** 不记录操作日志的路径（避免日志刷屏） */
-    private const LOG_EXCLUDE = [
-        'operation-logs',
-        'projects',
     ];
 
     public function handle(Request $request, \Closure $next)
@@ -67,7 +54,7 @@ class AdminRequestLog
 
         Log::info(sprintf('[admin:req] %s %s admin_id=%s', $method, $url, $adminId));
 
-        // 写操作：在执行业务逻辑之前查询变更前的数据
+        // 增删改操作：在执行业务逻辑之前查询变更前的数据
         $beforeVal = null;
         if (in_array($method, ['POST', 'PUT', 'DELETE']) && $adminId > 0) {
             $beforeVal = $this->resolveBeforeVal($request);
@@ -80,26 +67,12 @@ class AdminRequestLog
         $status = method_exists($response, 'getCode') ? $response->getCode() : 0;
         Log::info(sprintf('[admin:res] %s %s status=%s %dms', $method, $url, $status, $ms));
 
-        // 所有请求写入操作日志（排除部分路径避免刷屏）
-        if ($adminId > 0 && !$this->isExcluded($request)) {
+        // 仅增删改写入操作日志
+        if (in_array($method, ['POST', 'PUT', 'DELETE']) && $adminId > 0) {
             $this->recordLog($request, $method, $status, $beforeVal);
         }
 
         return $response;
-    }
-
-    private function isExcluded(Request $request): bool
-    {
-        $path = trim($request->pathinfo(), '/');
-        if (str_starts_with($path, 'admin/')) {
-            $path = substr($path, 6);
-        }
-        foreach (self::LOG_EXCLUDE as $prefix) {
-            if (str_starts_with($path, $prefix)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private function recordLog(Request $request, string $method, int $httpStatus, ?string $beforeVal): void

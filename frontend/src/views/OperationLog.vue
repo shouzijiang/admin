@@ -106,7 +106,7 @@
           <div class="json-block" v-if="currentLog.before_val">
             <pre>{{ prettyJson(currentLog.before_val) }}</pre>
           </div>
-          <div v-else class="json-empty">（无，新增操作或查操作）</div>
+          <div v-else class="json-empty">（无，新增操作）</div>
         </div>
 
         <div class="drawer-section">
