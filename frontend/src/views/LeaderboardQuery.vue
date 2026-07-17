@@ -10,7 +10,7 @@
             <el-input v-model="filters.user_id" placeholder="精确匹配，留空查全部" clearable style="width: 200px" />
           </el-form-item>
           <el-form-item label="排序玩法">
-            <el-select v-model="filters.sort_field" placeholder="默认按用户ID" clearable style="width: 140px">
+            <el-select v-model="filters.sort_field" placeholder="小红书" clearable style="width: 140px">
               <el-option label="初级" value="basic" />
               <el-option label="经典" value="classic" />
               <el-option label="小红书" value="xhs" />
@@ -82,8 +82,8 @@ const loading = ref(false)
 
 const filters = ref({
   user_id: '',
-  sort_field: '',
-  sort_order: '',
+  sort_field: 'xhs',
+  sort_order: 'desc',
 })
 
 function totalCount(row) {
@@ -123,7 +123,7 @@ function search() {
 }
 
 function reset() {
-  filters.value = { user_id: '', sort_field: '', sort_order: '' }
+  filters.value = { user_id: '', sort_field: 'xhs', sort_order: 'desc' }
   currentPage.value = 1
   fetchList()
 }

@@ -34,20 +34,27 @@
           <span class="menu-icon">📜</span>
           <span>操作日志</span>
         </el-menu-item>
-        <el-menu-item index="/orders">
-          <span class="menu-icon">🛒</span>
-          <span>订单查询</span>
-        </el-menu-item>
         <el-menu-item index="/feedbacks">
           <span class="menu-icon">💬</span>
           <span>意见反馈</span>
+        </el-menu-item>
+        <div class="menu-section-title">💳 充值系统</div>
+        <el-menu-item index="/orders">
+          <span class="menu-icon">🛒</span>
+          <span>订单查询</span>
         </el-menu-item>
       </el-menu>
       <div class="logout" @click="logout">
         <span>退出登录</span>
       </div>
     </el-aside>
-    <el-main><router-view /></el-main>
+    <el-main>
+      <router-view v-slot="{ Component }">
+        <keep-alive>
+          <component :is="Component" />
+        </keep-alive>
+      </router-view>
+    </el-main>
   </el-container>
 </template>
 
@@ -132,6 +139,12 @@ function logout() {
   text-align: center;
   font-size: 13px;
   transition: color 0.2s;
+}
+.menu-section-title {
+  padding: 16px 20px 6px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 1px;
 }
 .logout:hover {
   color: rgba(255, 255, 255, 0.85);

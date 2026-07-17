@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS `admin_operation_logs` (
   `method`      VARCHAR(10) NOT NULL COMMENT 'HTTP方法',
   `path`        VARCHAR(255) NOT NULL COMMENT '请求路径',
   `module`      VARCHAR(50) NOT NULL DEFAULT '' COMMENT '模块名',
+  `action`      VARCHAR(100) NOT NULL DEFAULT '' COMMENT '操作名称',
   `target`      VARCHAR(255) NOT NULL DEFAULT '' COMMENT '操作目标',
   `before_val`  TEXT COMMENT '变更前值(JSON)',
   `after_val`   TEXT COMMENT '变更后值(JSON)',

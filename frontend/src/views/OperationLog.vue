@@ -44,19 +44,14 @@
       <el-table-column prop="id" label="ID" width="70" />
       <el-table-column prop="admin_name" label="操作人" width="100" />
       <el-table-column prop="module" label="模块" width="100" />
-      <el-table-column prop="method" label="方法" width="100">
+      <el-table-column prop="action" label="操作" width="140" show-overflow-tooltip />
+      <el-table-column prop="method" label="方法" width="90">
         <template #default="{ row }">
           <el-tag size="small" :type="methodTag(row.method)">{{ row.method }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="path" label="接口路径" min-width="160" show-overflow-tooltip />
       <el-table-column prop="target" label="操作目标" width="140" show-overflow-tooltip />
-      <el-table-column label="变更后值" min-width="200" show-overflow-tooltip>
-        <template #default="{ row }">
-          <span v-if="row.after_val" class="json-preview">{{ formatJson(row.after_val) }}</span>
-          <span v-else style="color:#c0c4cc;">—</span>
-        </template>
-      </el-table-column>
       <el-table-column prop="ip" label="IP" width="140" />
       <el-table-column prop="status" label="状态" width="90">
         <template #default="{ row }">
@@ -66,7 +61,7 @@
         </template>
       </el-table-column>
       <el-table-column prop="created_at" label="操作时间" width="170" />
-      <el-table-column label="操作" width="70" fixed="right">
+      <el-table-column label="操作" width="100" fixed="right">
         <template #default="{ row }">
           <el-button size="small" text type="primary" @click="openDrawer(row)">详情</el-button>
         </template>
@@ -106,18 +101,20 @@
           <el-descriptions-item label="操作时间">{{ currentLog.created_at }}</el-descriptions-item>
         </el-descriptions>
 
-        <div class="drawer-section" v-if="currentLog.after_val">
-          <div class="drawer-section-title">变更后值</div>
-          <div class="json-block">
-            <pre>{{ prettyJson(currentLog.after_val) }}</pre>
-          </div>
-        </div>
-
-        <div class="drawer-section" v-if="currentLog.before_val">
+        <div class="drawer-section">
           <div class="drawer-section-title">变更前值</div>
-          <div class="json-block">
+          <div class="json-block" v-if="currentLog.before_val">
             <pre>{{ prettyJson(currentLog.before_val) }}</pre>
           </div>
+          <div v-else class="json-empty">（无，新增操作或查操作）</div>
+        </div>
+
+        <div class="drawer-section">
+          <div class="drawer-section-title">变更后值</div>
+          <div class="json-block" v-if="currentLog.after_val">
+            <pre>{{ prettyJson(currentLog.after_val) }}</pre>
+          </div>
+          <div v-else class="json-empty">（无）</div>
         </div>
       </template>
     </el-drawer>
@@ -274,5 +271,10 @@ onMounted(fetchList)
   color: #303133;
   white-space: pre-wrap;
   word-break: break-all;
+}
+.json-empty {
+  color: #c0c4cc;
+  font-size: 13px;
+  padding: 14px 0;
 }
 </style>
