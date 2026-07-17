@@ -44,7 +44,7 @@
       <el-table-column prop="id" label="ID" width="70" />
       <el-table-column prop="admin_name" label="操作人" width="100" />
       <el-table-column prop="module" label="模块" width="100" />
-      <el-table-column prop="method" label="方法" width="70">
+      <el-table-column prop="method" label="方法" width="100">
         <template #default="{ row }">
           <el-tag size="small" :type="methodTag(row.method)">{{ row.method }}</el-tag>
         </template>
@@ -66,6 +66,11 @@
         </template>
       </el-table-column>
       <el-table-column prop="created_at" label="操作时间" width="170" />
+      <el-table-column label="操作" width="70" fixed="right">
+        <template #default="{ row }">
+          <el-button size="small" text type="primary" @click="openDrawer(row)">详情</el-button>
+        </template>
+      </el-table-column>
     </el-table>
 
     <div class="pagination-wrap">
@@ -79,6 +84,43 @@
         @current-change="fetchList"
       />
     </div>
+
+    <!-- 详情抽屉 -->
+    <el-drawer v-model="drawerVisible" title="操作详情" direction="rtl" size="520px">
+      <template v-if="currentLog">
+        <el-descriptions :column="1" border size="small">
+          <el-descriptions-item label="ID">{{ currentLog.id }}</el-descriptions-item>
+          <el-descriptions-item label="操作人">{{ currentLog.admin_name }}</el-descriptions-item>
+          <el-descriptions-item label="模块">{{ currentLog.module }}</el-descriptions-item>
+          <el-descriptions-item label="方法">
+            <el-tag size="small" :type="methodTag(currentLog.method)">{{ currentLog.method }}</el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="接口路径">{{ currentLog.path }}</el-descriptions-item>
+          <el-descriptions-item label="操作目标">{{ currentLog.target || '—' }}</el-descriptions-item>
+          <el-descriptions-item label="状态">
+            <el-tag size="small" :type="currentLog.status === 'success' ? 'success' : 'danger'">
+              {{ currentLog.status === 'success' ? '成功' : '失败' }}
+            </el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="IP">{{ currentLog.ip }}</el-descriptions-item>
+          <el-descriptions-item label="操作时间">{{ currentLog.created_at }}</el-descriptions-item>
+        </el-descriptions>
+
+        <div class="drawer-section" v-if="currentLog.after_val">
+          <div class="drawer-section-title">变更后值</div>
+          <div class="json-block">
+            <pre>{{ prettyJson(currentLog.after_val) }}</pre>
+          </div>
+        </div>
+
+        <div class="drawer-section" v-if="currentLog.before_val">
+          <div class="drawer-section-title">变更前值</div>
+          <div class="json-block">
+            <pre>{{ prettyJson(currentLog.before_val) }}</pre>
+          </div>
+        </div>
+      </template>
+    </el-drawer>
   </div>
 </template>
 
@@ -98,6 +140,10 @@ const filters = ref({
   status: '',
 })
 
+// 详情抽屉
+const drawerVisible = ref(false)
+const currentLog = ref(null)
+
 function methodTag(method) {
   const map = { POST: 'warning', PUT: 'primary', DELETE: 'danger' }
   return map[method] || ''
@@ -114,6 +160,20 @@ function formatJson(str) {
   } catch {
     return str.length > 80 ? str.slice(0, 80) + '…' : str
   }
+}
+
+function prettyJson(str) {
+  try {
+    if (!str) return ''
+    return JSON.stringify(JSON.parse(str), null, 2)
+  } catch {
+    return str
+  }
+}
+
+function openDrawer(row) {
+  currentLog.value = row
+  drawerVisible.value = true
 }
 
 async function fetchList() {
@@ -186,5 +246,33 @@ onMounted(fetchList)
   font-family: 'SF Mono', 'Menlo', monospace;
   font-size: 12px;
   color: #606266;
+}
+
+/* 详情抽屉 */
+.drawer-section {
+  margin-top: 20px;
+}
+.drawer-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 8px;
+}
+.json-block {
+  background: #f5f7fa;
+  border: 1px solid #e4e7ed;
+  border-radius: 6px;
+  padding: 14px 16px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+.json-block pre {
+  margin: 0;
+  font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #303133;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 </style>

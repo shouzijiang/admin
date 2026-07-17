@@ -802,6 +802,25 @@ class AdminService
         ];
     }
 
+    public function updateMail(string $project, int $id, array $data): void
+    {
+        $update = [];
+        if (isset($data['title'])) {
+            $update['title'] = $data['title'];
+        }
+        if (isset($data['content'])) {
+            $update['content'] = $data['content'];
+        }
+        if (isset($data['is_published'])) {
+            $update['is_published'] = (int) $data['is_published'];
+        }
+        if (empty($update)) {
+            throw new \InvalidArgumentException('没有需要更新的字段');
+        }
+        $update['updated_at'] = date('Y-m-d H:i:s');
+        Db::connect($project)->name('pun_game_mail')->where('id', $id)->update($update);
+    }
+
     private function grantHintQuotaToUser(string $project, int $userId, int $amount): void
     {
         $db = Db::connect($project);

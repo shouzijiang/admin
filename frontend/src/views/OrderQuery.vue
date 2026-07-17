@@ -86,7 +86,7 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="product_id" label="道具ID" width="120" show-overflow-tooltip />
+      <el-table-column prop="product_id" label="道具ID" width="10" show-overflow-tooltip />
       <el-table-column prop="extra" label="扩展信息" width="150" show-overflow-tooltip>
         <template #default="{ row }">
           {{ row.extra || '—' }}

@@ -26,6 +26,7 @@ Route::group('admin', function () {
         Route::post('streamer/payouts', 'Admin/streamerPayoutAdd');
         Route::get('mails', 'Admin/mailList');
         Route::post('mails/send', 'Admin/mailSend');
+        Route::post('mails/update', 'Admin/mailUpdate');
         Route::get('operation-logs', 'Admin/operationLogList');
         Route::get('leaderboard', 'Admin/leaderboardList');
         Route::get('orders', 'Admin/orderList');

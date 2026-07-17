@@ -302,4 +302,18 @@ class Admin extends BaseController
             return json(['code' => 400, 'message' => $e->getMessage(), 'data' => null]);
         }
     }
+
+    public function mailUpdate(Request $request): \think\Response
+    {
+        try {
+            $id = (int) $request->post('id');
+            if ($id <= 0) {
+                throw new \InvalidArgumentException('缺少邮件ID');
+            }
+            $this->service->updateMail($this->getProject($request), $id, $request->post());
+            return json(['code' => 200, 'message' => '更新成功', 'data' => null]);
+        } catch (\InvalidArgumentException $e) {
+            return json(['code' => 400, 'message' => $e->getMessage(), 'data' => null]);
+        }
+    }
 }
