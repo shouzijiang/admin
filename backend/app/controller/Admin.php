@@ -81,6 +81,29 @@ class Admin extends BaseController
         return json(['code' => 200, 'message' => '已删除', 'data' => null]);
     }
 
+    // ─── 专辑配置 ───────────────────────────────────────
+
+    public function albumCategoryList(Request $request): \think\Response
+    {
+        return json(['code' => 200, 'message' => 'success', 'data' => $this->service->getAlbumCategories($this->getProject($request))]);
+    }
+
+    public function albumCategorySave(Request $request): \think\Response
+    {
+        $data = $request->post();
+        $id = $request->post('id', null);
+        $this->service->saveAlbumCategory($this->getProject($request), $data, $id ? (int) $id : null);
+        return json(['code' => 200, 'message' => $id ? '已更新' : '已创建', 'data' => null]);
+    }
+
+    public function albumCategoryDelete(Request $request): \think\Response
+    {
+        $id = (int) $request->post('id', 0);
+        if ($id <= 0) return json(['code' => 400, 'message' => '缺少ID', 'data' => null]);
+        $this->service->deleteAlbumCategory($this->getProject($request), $id);
+        return json(['code' => 200, 'message' => '已删除', 'data' => null]);
+    }
+
     // ─── 公告管理 ───────────────────────────────────────
 
     public function announcementList(Request $request): \think\Response

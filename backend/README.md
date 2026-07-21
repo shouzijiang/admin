@@ -66,7 +66,9 @@ admin/
 
 ```
 🎯 管理后台 (Layout)
-├── 📢 活动配置     → /activity        → ActivityConfig.vue
+├── ⚙️ 页面配置
+│   ├── 📢 活动配置     → /activity        → ActivityConfig.vue
+│   └── 📀 专辑配置     → /album-config    → AlbumConfig.vue
 ├── 📋 公告管理     → /announcements   → Announcements.vue
 ├── 👤 用户查询     → /users           → UserLookup.vue
 ├── 💰 邀请结算     → /streamer        → StreamerSettlement.vue
@@ -111,7 +113,19 @@ admin/
   - `DELETE /admin/activity-float`  — 删除
 - **字段**: `id`, `enabled`, `label`, `image`, `link`, `start_at`, `end_at`, `remark`
 
-### 2. 📋 公告管理 (Announcements)
+### 2. 📀 专辑配置 (Album Category Config)
+
+管理游戏专辑分类元数据，控制客户端专辑展示。
+
+- **页面**: `/album-config` → `AlbumConfig.vue`
+- **数据库表**: `pun_album_category` (项目库)
+- **API**:
+  - `GET    /admin/album-categories`  — 列表查询
+  - `POST   /admin/album-categories`  — 新增/更新
+  - `DELETE /admin/album-categories`  — 删除
+- **字段**: `id`, `slug` (唯一标识), `label` (显示名称), `icon` (封面图CDN地址), `sort_order` (排序), `is_active` (是否上架), `answer_types` (匹配的 answerType JSON 数组), `total_count` (题目总数，由 gen_category_json 自动更新), `created_at`, `updated_at`
+
+### 3. 📋 公告管理 (Announcements)
 
 管理游戏公告/更新日志，支持分页和软删除。
 
@@ -124,7 +138,7 @@ admin/
 - **字段**: `id`, `version_code`, `title`, `body`, `changelog_type` (`normal`/`notice`), `is_published`, `published_at`
 - **详情**: 列表「详情」按钮展示完整正文（按行拆分）与元信息
 
-### 3. 👤 用户查询 (User Lookup)
+### 4. 👤 用户查询 (User Lookup)
 
 按 ID、昵称或 OpenID 搜索用户，直接展示玩家详情，支持修改解字次数。
 
@@ -137,7 +151,7 @@ admin/
   - `POST /admin/users/progress`  — 修改通关记录与排行榜 (`user_id`, `progress`, `rank`)
 - **详情包含**: 基本资料、来源渠道、VIP、解字剩余（可编辑）/累计消耗（只读）、五模式（初级/经典/小红书/故事/歌曲）通关 JSON 数组与排行榜最高关（均可编辑）
 
-### 4. 💰 邀请结算 (Streamer Settlement)
+### 5. 💰 邀请结算 (Streamer Settlement)
 
 管理每日视频广告单价、邀请人收益核算与打款记录，替代手工改表和 `打款验证.sql`。
 
@@ -151,7 +165,7 @@ admin/
   - `POST /admin/streamer/payouts`  — 添加打款记录 (`user_id`, `period_end`, `paid_amount`, `remark`)
 - **单价计算**: `video_unit_price = TRUNCATE(video_total_amount / video_claim_count, 4)`，除数来自全站 `pun_reward_claim_record` 中 `reward_video` 成功次数
 
-### 5. ✉️ 邮件发送 (Mail Send)
+### 6. ✉️ 邮件发送 (Mail Send)
 
 向全体或指定用户发送游戏内邮件，支持附带奖励。
 
@@ -164,7 +178,7 @@ admin/
 - **字段**: `scope` (all/user), `target_user_id`, `title`, `content`, `is_published` (1=上线 / 0=下架), `reward_type` (目前仅 `hint_quota`), `reward_amount`
 - **全服发奖**: `scope=all` 时通过 SQL 给 `users` 表当前所有用户 `pun_user_hint_quota.quota` 增量（与 think1 手工 `UPDATE pun_user_hint_quota` 一致）；之后新注册用户不会自动获得
 
-### 6. 🏆 排行榜查询 (Leaderboard Query)
+### 7. 🏆 排行榜查询 (Leaderboard Query)
 
 查询玩家各模式通关关卡数量，支持按用户ID筛选和分页。
 
@@ -176,7 +190,7 @@ admin/
 - **字段**: `user_id`, `basic_count` (初级通关数), `classic_count` (经典通关数), `xhs_count` (小红书通关数), `story_count` (故事通关数), `song_count` (歌曲通关数), `updated_at` (更新时间)
 - **详情**: 通关数由 `passed_levels` JSON 数组长度计算得出，支持按各列排序
 
-### 8. 📜 操作日志 (Operation Log)
+### 9. 📜 操作日志 (Operation Log)
 
 记录所有管理后台的变更操作（POST/PUT/DELETE），自动捕获操作人、模块、接口路径、操作目标、请求参数、IP 和结果状态。
 
@@ -188,7 +202,7 @@ admin/
 - **字段**: `admin_name`, `module`, `method`, `path`, `target`, `after_val` (请求参数), `ip`, `status`, `created_at`
 - **自动记录**: 通过 `AdminRequestLog` 中间件自动写入，对所有认证后的 POST/PUT/DELETE 请求生效
 
-### 9. 🛒 订单查询 (Order Query)
+### 10. 🛒 订单查询 (Order Query)
 
 查询支付订单，支持多条件筛选和分页。
 
@@ -199,7 +213,7 @@ admin/
 - **筛选条件**: `order_no` (订单号模糊), `user_id` (精确), `status` (pending/paid/refunded/closed), `pay_type` (wx_jsapi/wx_virtual), `platform` (ios/android), `pay_channel` (wechat/apple), `date_start`/`date_end` (创建时间范围)
 - **字段**: `id`, `order_no`, `user_id`, `amount`, `description`, `pay_type`, `platform`, `pay_channel`, `status`, `product_id`, `extra`, `transaction_id`, `prepay_id`, `paid_at`, `created_at`
 
-### 10. 💬 意见反馈 (Feedback)
+### 11. 💬 意见反馈 (Feedback)
 
 管理用户提交的意见反馈，支持状态标记和回复（模板/手动），回复时自动发送游戏内邮件并发放解字奖励。
 
@@ -213,7 +227,7 @@ admin/
 - **处理状态**: 不入库，纯前端本地 switch 标记，刷新后重置
 - **回复流程**: 选择模板或手动填写回复内容 → 确认解字奖励次数 → 提交 → 插入 `pun_game_mail` 邮件 + 发放 `pun_user_hint_quota` 解字次数（不修改 `pun_game_feedback` 表）
 
-### 11. 🔐 登录认证 (Login)
+### 12. 🔐 登录认证 (Login)
 
 - **页面**: `/login` → `Login.vue`
 - **API**: `POST /admin/login`
@@ -243,6 +257,9 @@ admin/
 | GET | `/admin/activity-float` | 活动浮动入口列表 |
 | POST | `/admin/activity-float` | 新增/更新活动浮动入口 |
 | DELETE | `/admin/activity-float` | 删除活动浮动入口 |
+| GET | `/admin/album-categories` | 专辑分类列表 |
+| POST | `/admin/album-categories` | 新增/更新专辑分类 |
+| DELETE | `/admin/album-categories` | 删除专辑分类 |
 | GET | `/admin/announcements` | 公告列表（分页） |
 | POST | `/admin/announcements` | 新增/更新公告 |
 | DELETE | `/admin/announcements` | 软删除公告 |
@@ -282,6 +299,7 @@ admin/
 | 表名 | 说明 | 关联模块 |
 |------|------|----------|
 | `pun_config` | 活动浮动入口配置 | 活动配置 |
+| `pun_album_category` | 专辑分类元数据 | 专辑配置 |
 | `pun_game_changelog` | 游戏公告/更新日志 | 公告管理 |
 | `users` | 终端用户 | 用户查询 |
 | `pun_user_hint_quota` | 用户提示额度 | 用户查询、邮件发送 |

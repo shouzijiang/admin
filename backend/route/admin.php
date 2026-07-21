@@ -11,6 +11,9 @@ Route::group('admin', function () {
         Route::get('activity-float', 'Admin/activityFloatList');
         Route::post('activity-float', 'Admin/activityFloatSave');
         Route::delete('activity-float', 'Admin/activityFloatDelete');
+        Route::get('album-categories', 'Admin/albumCategoryList');
+        Route::post('album-categories', 'Admin/albumCategorySave');
+        Route::delete('album-categories', 'Admin/albumCategoryDelete');
         Route::get('announcements', 'Admin/announcementList');
         Route::post('announcements', 'Admin/announcementSave');
         Route::delete('announcements', 'Admin/announcementDelete');

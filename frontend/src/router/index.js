@@ -2,6 +2,7 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 import Login from '../views/Login.vue'
 import Layout from '../views/Layout.vue'
 import ActivityConfig from '../views/ActivityConfig.vue'
+import AlbumConfig from '../views/AlbumConfig.vue'
 import Announcements from '../views/Announcements.vue'
 import UserLookup from '../views/UserLookup.vue'
 import MailSend from '../views/MailSend.vue'
@@ -19,6 +20,7 @@ const routes = [
     redirect: '/activity',
     children: [
       { path: 'activity', component: ActivityConfig },
+      { path: 'album-config', component: AlbumConfig },
       { path: 'announcements', component: Announcements },
       { path: 'users', component: UserLookup },
       { path: 'streamer', component: StreamerSettlement },

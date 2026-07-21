@@ -111,6 +111,37 @@ class AdminService
         Db::connect($project)->name('pun_config')->where('id', $id)->delete();
     }
 
+    // ─── 专辑配置 ──────────────────────────────────────────
+
+    public function getAlbumCategories(string $project): array
+    {
+        $rows = Db::connect($project)->name('pun_album_category')
+            ->order('sort_order asc, id desc')->select()->toArray();
+        return ['list' => $rows];
+    }
+
+    public function saveAlbumCategory(string $project, array $data, ?int $id = null): void
+    {
+        $row = [
+            'slug'        => $data['slug'] ?? '',
+            'label'       => $data['label'] ?? '',
+            'icon'        => $data['icon'] ?? '',
+            'sort_order'  => (int) ($data['sort_order'] ?? 0),
+            'is_active'   => (int) ($data['is_active'] ?? 1),
+            'answer_types'=> isset($data['answer_types']) ? json_encode($data['answer_types'], JSON_UNESCAPED_UNICODE) : null,
+        ];
+        if ($id) {
+            Db::connect($project)->name('pun_album_category')->where('id', $id)->update($row);
+        } else {
+            Db::connect($project)->name('pun_album_category')->insert($row);
+        }
+    }
+
+    public function deleteAlbumCategory(string $project, int $id): void
+    {
+        Db::connect($project)->name('pun_album_category')->where('id', $id)->delete();
+    }
+
     // ─── 公告管理 ──────────────────────────────────────────
 
     public function announcementList(string $project, int $page = 1, int $pageSize = 20): array

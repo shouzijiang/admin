@@ -6,10 +6,20 @@
         <span class="logo-text">管理后台</span>
       </div>
       <el-menu :default-active="route.path" router>
-        <el-menu-item index="/activity">
-          <span class="menu-icon">📢</span>
-          <span>活动配置</span>
-        </el-menu-item>
+        <el-sub-menu index="/page-config">
+          <template #title>
+            <span class="menu-icon">⚙️</span>
+            <span>页面配置</span>
+          </template>
+          <el-menu-item index="/activity">
+            <span class="menu-icon">📢</span>
+            <span>活动配置</span>
+          </el-menu-item>
+          <el-menu-item index="/album-config">
+            <span class="menu-icon">📀</span>
+            <span>专辑配置</span>
+          </el-menu-item>
+        </el-sub-menu>
         <el-menu-item index="/announcements">
           <span class="menu-icon">📋</span>
           <span>公告管理</span>
@@ -128,6 +138,21 @@ function logout() {
 .menu-icon {
   margin-right: 6px;
   font-size: 15px;
+}
+:deep(.el-sub-menu__title) {
+  color: rgba(255, 255, 255, 0.72) !important;
+  margin: 2px 8px;
+  border-radius: 6px;
+  height: 44px;
+  line-height: 44px;
+  font-size: 14px;
+}
+:deep(.el-sub-menu__title:hover) {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+:deep(.el-sub-menu .el-menu-item) {
+  padding-left: 60px !important;
 }
 .logout {
   padding: 14px 20px;
