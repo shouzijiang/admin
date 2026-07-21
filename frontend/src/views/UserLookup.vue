@@ -153,7 +153,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import http from '../api/index.js'
@@ -380,14 +380,20 @@ async function saveRemark() {
   }
 }
 
+function queryUser(uid) {
+  if (!uid) return
+  keyword.value = String(uid)
+  searched.value = true
+  const id = parseInt(uid, 10)
+  if (id > 0) loadDetail(id)
+}
+
 onMounted(() => {
-  const uid = route.query.user_id
-  if (uid) {
-    keyword.value = String(uid)
-    searched.value = true
-    const id = parseInt(uid, 10)
-    if (id > 0) loadDetail(id)
-  }
+  queryUser(route.query.user_id)
+})
+
+watch(() => route.query.user_id, (newId) => {
+  queryUser(newId)
 })
 </script>
 
