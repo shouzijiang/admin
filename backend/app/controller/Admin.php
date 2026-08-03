@@ -302,6 +302,7 @@ class Admin extends BaseController
             'pay_type'    => trim((string) $request->get('pay_type', '')),
             'platform'    => trim((string) $request->get('platform', '')),
             'pay_channel' => trim((string) $request->get('pay_channel', '')),
+            'product_id'  => trim((string) $request->get('product_id', '')),
             'date_start'  => trim((string) $request->get('date_start', '')),
             'date_end'    => trim((string) $request->get('date_end', '')),
         ];

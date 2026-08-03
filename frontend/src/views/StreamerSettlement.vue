@@ -12,7 +12,9 @@
           <el-table-column prop="stat_date" label="统计日" width="120" />
           <el-table-column prop="video_total_amount" label="视频总收入(元)" width="140" />
           <el-table-column prop="video_claim_count" label="全站领取次数" width="120" />
-          <el-table-column prop="video_event_count" label="全站事件条数" width="120" />
+          <el-table-column prop="video_event_count" label="被邀请人观看广告数量" width="200" />
+          <el-table-column prop="gzh_event_count" label="公众号" width="80" />
+          <el-table-column prop="article_event_count" label="公众号文章" width="140" />
           <el-table-column prop="video_unit_price" label="单条单价" width="110" />
           <el-table-column prop="remark" label="备注" min-width="120" show-overflow-tooltip />
           <el-table-column prop="updated_at" label="更新时间" width="170" />

@@ -51,7 +51,14 @@
         </template>
       </el-table-column>
       <el-table-column prop="path" label="接口路径" min-width="160" show-overflow-tooltip />
-      <el-table-column prop="target" label="操作目标" width="140" show-overflow-tooltip />
+      <el-table-column label="操作目标" width="160" show-overflow-tooltip>
+        <template #default="{ row }">
+          <el-link v-if="isUserIdTarget(row.target)" type="primary" @click="goToUser(extractUserId(row.target))">
+            {{ row.target }}
+          </el-link>
+          <span v-else>{{ row.target || '—' }}</span>
+        </template>
+      </el-table-column>
       <el-table-column prop="ip" label="IP" width="140" />
       <el-table-column prop="status" label="状态" width="90">
         <template #default="{ row }">
@@ -91,7 +98,14 @@
             <el-tag size="small" :type="methodTag(currentLog.method)">{{ currentLog.method }}</el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="接口路径">{{ currentLog.path }}</el-descriptions-item>
-          <el-descriptions-item label="操作目标">{{ currentLog.target || '—' }}</el-descriptions-item>
+          <el-descriptions-item label="操作目标">
+            <template v-if="isUserIdTarget(currentLog.target)">
+              <el-link type="primary" @click="goToUser(extractUserId(currentLog.target))">
+                {{ currentLog.target }}
+              </el-link>
+            </template>
+            <template v-else>{{ currentLog.target || '—' }}</template>
+          </el-descriptions-item>
           <el-descriptions-item label="状态">
             <el-tag size="small" :type="currentLog.status === 'success' ? 'success' : 'danger'">
               {{ currentLog.status === 'success' ? '成功' : '失败' }}
@@ -103,6 +117,17 @@
 
         <div class="drawer-section">
           <div class="drawer-section-title">变更前值</div>
+          <div v-if="currentLog.before_val && extractUserIdsFromJson(currentLog.before_val).length" class="user-links">
+            <el-link
+              v-for="uid in extractUserIdsFromJson(currentLog.before_val)"
+              :key="uid"
+              type="primary"
+              @click="goToUser(uid)"
+              class="user-link-item"
+            >
+              👤 查看用户 {{ uid }}
+            </el-link>
+          </div>
           <div class="json-block" v-if="currentLog.before_val">
             <pre>{{ prettyJson(currentLog.before_val) }}</pre>
           </div>
@@ -111,6 +136,17 @@
 
         <div class="drawer-section">
           <div class="drawer-section-title">变更后值</div>
+          <div v-if="currentLog.after_val && extractUserIdsFromJson(currentLog.after_val).length" class="user-links">
+            <el-link
+              v-for="uid in extractUserIdsFromJson(currentLog.after_val)"
+              :key="uid"
+              type="primary"
+              @click="goToUser(uid)"
+              class="user-link-item"
+            >
+              👤 查看用户 {{ uid }}
+            </el-link>
+          </div>
           <div class="json-block" v-if="currentLog.after_val">
             <pre>{{ prettyJson(currentLog.after_val) }}</pre>
           </div>
@@ -123,7 +159,10 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import http from '../api/index.js'
+
+const router = useRouter()
 
 const list = ref([])
 const total = ref(0)
@@ -166,6 +205,41 @@ function prettyJson(str) {
   } catch {
     return str
   }
+}
+
+function isUserIdTarget(target) {
+  return /^user_id=\d+$/.test(target)
+}
+
+function extractUserId(target) {
+  const m = target.match(/^user_id=(\d+)$/)
+  return m ? parseInt(m[1], 10) : null
+}
+
+function extractUserIdsFromJson(str) {
+  if (!str) return []
+  try {
+    const obj = JSON.parse(str)
+    const ids = new Set()
+    function walk(val) {
+      if (!val || typeof val !== 'object') return
+      for (const [k, v] of Object.entries(val)) {
+        if (k === 'user_id' && typeof v === 'number' && v > 0) {
+          ids.add(v)
+        }
+        if (typeof v === 'object') walk(v)
+      }
+    }
+    walk(obj)
+    return [...ids]
+  } catch {
+    return []
+  }
+}
+
+function goToUser(userId) {
+  if (!userId) return
+  router.push({ path: '/users', query: { user_id: userId } })
 }
 
 function openDrawer(row) {
@@ -276,5 +350,14 @@ onMounted(fetchList)
   color: #c0c4cc;
   font-size: 13px;
   padding: 14px 0;
+}
+.user-links {
+  margin-bottom: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.user-link-item {
+  font-size: 13px;
 }
 </style>

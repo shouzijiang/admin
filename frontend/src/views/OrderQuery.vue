@@ -31,6 +31,9 @@
             <el-option label="Android" value="android" />
           </el-select>
         </el-form-item>
+        <el-form-item label="道具ID">
+          <el-input v-model="filters.product_id" placeholder="精确匹配" clearable style="width: 140px" />
+        </el-form-item>
         <el-form-item label="结算渠道">
           <el-select v-model="filters.pay_channel" placeholder="全部" clearable style="width: 120px">
             <el-option label="微信" value="wechat" />
@@ -130,6 +133,7 @@ const filters = ref({
   pay_type: '',
   platform: '',
   pay_channel: '',
+  product_id: '',
 })
 
 function payTypeLabel(type) {
@@ -189,6 +193,7 @@ function reset() {
     pay_type: '',
     platform: '',
     pay_channel: '',
+    product_id: '',
   }
   dateRange.value = null
   currentPage.value = 1

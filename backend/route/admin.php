@@ -16,7 +16,7 @@ Route::group('admin', function () {
         Route::delete('album-categories', 'Admin/albumCategoryDelete');
         Route::get('announcements', 'Admin/announcementList');
         Route::post('announcements', 'Admin/announcementSave');
-        Route::delete('announcements', 'Admin/announcementDelete');
+        Route::post('announcements/unpublish', 'Admin/announcementDelete');
         Route::get('users/search', 'Admin/searchUsers');
         Route::get('users/detail', 'Admin/userDetail');
         Route::post('users/quota', 'Admin/userUpdateQuota');

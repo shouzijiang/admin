@@ -6,14 +6,14 @@
     </div>
     <el-table :data="list" border stripe max-height="calc(100vh - 160px)">
       <el-table-column prop="id" label="ID" width="60" />
-      <el-table-column label="封面" width="80">
+      <el-table-column label="封面" width="120">
         <template #default="{ row }">
           <el-image v-if="row.icon" :src="row.icon" style="width:48px;height:48px;border-radius:4px;" fit="cover" />
           <span v-else style="color:#ccc;">无</span>
         </template>
       </el-table-column>
       <el-table-column prop="slug" label="标识" width="120" />
-      <el-table-column prop="label" label="名称" width="100" />
+      <el-table-column prop="label" label="名称" width="180" />
       <el-table-column label="上架" width="70">
         <template #default="{ row }"><el-tag :type="row.is_active ? 'success' : 'info'">{{ row.is_active ? '是' : '否' }}</el-tag></template>
       </el-table-column>

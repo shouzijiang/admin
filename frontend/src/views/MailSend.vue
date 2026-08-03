@@ -89,7 +89,8 @@
               <template #default="{ row }">{{ row.scope === 'all' ? '全服' : '用户' }}</template>
             </el-table-column>
             <el-table-column prop="target_user_id" label="目标用户" width="90" />
-            <el-table-column prop="title" label="标题" min-width="140" show-overflow-tooltip />
+            <el-table-column prop="title" label="标题" min-width="120" show-overflow-tooltip />
+            <el-table-column prop="content" label="内容" min-width="200" show-overflow-tooltip />
             <el-table-column label="状态" width="75">
               <template #default="{ row }">
                 <el-tag :type="row.is_published == 1 ? 'success' : 'info'" size="small">

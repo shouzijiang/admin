@@ -495,6 +495,15 @@ class AdminService
         $total = $db->name('pun_game_channel_unit_price')->count();
         $list = $db->name('pun_game_channel_unit_price')
             ->order('stat_date desc')->page($page, $pageSize)->select()->toArray();
+
+        // 按 stat_date 实时统计三类渠道的事件数
+        foreach ($list as &$row) {
+            $statDate = $row['stat_date'];
+            $row['video_event_count'] = $this->countRewardVideoEvents($project, $statDate);
+            $row['gzh_event_count']    = $this->countGzhRewardVideoEvents($project, $statDate);
+            $row['article_event_count'] = $this->countArticleRewardVideoEvents($project, $statDate);
+        }
+
         return ['list' => $list, 'total' => $total];
     }
 
@@ -683,6 +692,25 @@ class AdminService
     {
         return (int) Db::connect($project)->name('pun_game_channel_events')
             ->where('event_type', 'reward_video')
+            ->where('channel', 'like', 'streamer\_%')
+            ->whereRaw('DATE(created_at) = ?', [$statDate])
+            ->count();
+    }
+
+    private function countGzhRewardVideoEvents(string $project, string $statDate): int
+    {
+        return (int) Db::connect($project)->name('pun_game_channel_events')
+            ->where('event_type', 'reward_video')
+            ->where('channel', 'gzh')
+            ->whereRaw('DATE(created_at) = ?', [$statDate])
+            ->count();
+    }
+
+    private function countArticleRewardVideoEvents(string $project, string $statDate): int
+    {
+        return (int) Db::connect($project)->name('pun_game_channel_events')
+            ->where('event_type', 'reward_video')
+            ->where('channel', '00003')
             ->whereRaw('DATE(created_at) = ?', [$statDate])
             ->count();
     }
@@ -786,6 +814,9 @@ class AdminService
         }
         if (!empty($filters['pay_channel'])) {
             $q->where('pay_channel', $filters['pay_channel']);
+        }
+        if (!empty($filters['product_id'])) {
+            $q->where('product_id', $filters['product_id']);
         }
         if (!empty($filters['date_start'])) {
             $q->where('created_at', '>=', $filters['date_start'] . ' 00:00:00');

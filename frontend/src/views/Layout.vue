@@ -151,6 +151,9 @@ function logout() {
   color: #fff !important;
   background: rgba(255, 255, 255, 0.08) !important;
 }
+:deep(.el-sub-menu .el-menu) {
+  background-color: rgba(0, 0, 0, 0.22);
+}
 :deep(.el-sub-menu .el-menu-item) {
   padding-left: 60px !important;
 }

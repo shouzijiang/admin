@@ -134,7 +134,7 @@ admin/
 - **API**:
   - `GET    /admin/announcements`  — 分页列表 (`page`, `pageSize`，最大 50 条/页)
   - `POST   /admin/announcements`  — 新增/更新
-  - `DELETE /admin/announcements`  — 软删除 (设置 `is_published=0`)
+  - `POST   /admin/announcements/unpublish`  — 下架公告 (设置 `is_published=0`)
 - **字段**: `id`, `version_code`, `title`, `body`, `changelog_type` (`normal`/`notice`), `is_published`, `published_at`
 - **详情**: 列表「详情」按钮展示完整正文（按行拆分）与元信息
 
@@ -262,7 +262,7 @@ admin/
 | DELETE | `/admin/album-categories` | 删除专辑分类 |
 | GET | `/admin/announcements` | 公告列表（分页） |
 | POST | `/admin/announcements` | 新增/更新公告 |
-| DELETE | `/admin/announcements` | 软删除公告 |
+| POST | `/admin/announcements/unpublish` | 下架公告 |
 | GET | `/admin/users/search` | 用户搜索 |
 | GET | `/admin/users/detail` | 用户详情 |
 | POST | `/admin/users/quota` | 修改剩余解字次数 |

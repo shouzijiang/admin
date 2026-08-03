@@ -32,7 +32,8 @@ class AdminRequestLog
     /** 路径→操作名 映射（仅增删改） */
     private const PATH_ACTION_MAP = [
         'activity-float'           => ['POST' => '保存活动配置', 'DELETE' => '删除活动配置'],
-        'announcements'            => ['POST' => '保存公告', 'DELETE' => '下架公告'],
+        'announcements/unpublish'  => ['POST' => '下架公告'],
+        'announcements'            => ['POST' => '保存公告'],
         'users/quota'              => ['POST' => '修改解字次数'],
         'users/progress'           => ['POST' => '修改通关记录'],
         'users/vip'                => ['POST' => '修改VIP'],

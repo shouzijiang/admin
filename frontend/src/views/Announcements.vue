@@ -178,7 +178,7 @@ async function save() {
 
 async function remove(id) {
   try {
-    await http.delete('/admin/announcements', { data: { id } })
+    await http.post('/admin/announcements/unpublish', { id })
     fetchList()
   } catch {}
 }
