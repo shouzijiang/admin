@@ -11,6 +11,11 @@ import LeaderboardQuery from '../views/LeaderboardQuery.vue'
 import OperationLog from '../views/OperationLog.vue'
 import OrderQuery from '../views/OrderQuery.vue'
 import Feedback from '../views/Feedback.vue'
+import WebsiteConfig from '../views/WebsiteConfig.vue'
+import WebsiteProducts from '../views/WebsiteProducts.vue'
+import WebsiteContent from '../views/WebsiteContent.vue'
+import WebsiteJobs from '../views/WebsiteJobs.vue'
+import WebsiteMessages from '../views/WebsiteMessages.vue'
 
 const routes = [
   { path: '/login', component: Login },
@@ -29,6 +34,11 @@ const routes = [
       { path: 'logs', component: OperationLog },
       { path: 'orders', component: OrderQuery },
       { path: 'feedbacks', component: Feedback },
+      { path: 'website-config', component: WebsiteConfig },
+      { path: 'website-products', component: WebsiteProducts },
+      { path: 'website-content', component: WebsiteContent },
+      { path: 'website-jobs', component: WebsiteJobs },
+      { path: 'website-messages', component: WebsiteMessages },
     ]
   },
 ]

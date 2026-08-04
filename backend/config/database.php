@@ -61,6 +61,28 @@ return [
             'fields_cache'    => false,
         ],
 
+        // 公司官网库（E:\php\qianzhigame）
+        // 与管理库同一 MySQL 实例，未单独配置 WEBSITE_DB_* 时复用 DB_* 的账号
+        'website' => [
+            'type'            => 'mysql',
+            'hostname'        => env('WEBSITE_DB_HOST', env('DB_HOST', '127.0.0.1')),
+            'database'        => env('WEBSITE_DB_NAME', 'qianzhi_website'),
+            'username'        => env('WEBSITE_DB_USER', env('DB_USER', 'root')),
+            'password'        => env('WEBSITE_DB_PASS', env('DB_PASS', '')),
+            'hostport'        => env('WEBSITE_DB_PORT', env('DB_PORT', '3306')),
+            'charset'         => 'utf8mb4',
+            'prefix'          => '',
+            'params'          => [],
+            'deploy'          => 0,
+            'rw_separate'     => false,
+            'master_num'      => 1,
+            'slave_no'        => '',
+            'fields_strict'   => true,
+            'break_reconnect' => false,
+            'trigger_sql'     => false,
+            'fields_cache'    => false,
+        ],
+
         // 支付库
         'qianzhi_pay' => [
             'type'            => 'mysql',

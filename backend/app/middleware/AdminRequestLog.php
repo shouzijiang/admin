@@ -27,6 +27,13 @@ class AdminRequestLog
         'leaderboard'    => '排行榜查询',
         'orders'         => '订单查询',
         'feedbacks'      => '意见反馈',
+
+        'website/config'       => '官网配置',
+        'website/products'     => '官网产品',
+        'website/capabilities' => '官网内容',
+        'website/milestones'   => '官网内容',
+        'website/jobs'         => '官网招聘',
+        'website/messages'     => '官网留言',
     ];
 
     /** 路径→操作名 映射（仅增删改） */
@@ -44,6 +51,14 @@ class AdminRequestLog
         'mails/update'             => ['POST' => '更新邮件'],
         'feedbacks/reply'          => ['POST' => '回复反馈'],
         'feedbacks/reply/update'   => ['POST' => '更新反馈回复'],
+
+        'website/config'           => ['POST' => '保存官网配置'],
+        'website/products'         => ['POST' => '保存官网产品', 'DELETE' => '删除官网产品'],
+        'website/capabilities'     => ['POST' => '保存官网核心能力', 'DELETE' => '删除官网核心能力'],
+        'website/milestones'       => ['POST' => '保存官网发展历程', 'DELETE' => '删除官网发展历程'],
+        'website/jobs'             => ['POST' => '保存官网岗位', 'DELETE' => '删除官网岗位'],
+        'website/messages/read'    => ['POST' => '处理官网留言'],
+        'website/messages'         => ['DELETE' => '删除官网留言'],
     ];
 
     public function handle(Request $request, \Closure $next)
@@ -249,6 +264,10 @@ class AdminRequestLog
                     $data = ['feedback' => $fb, 'reply_mail' => $mail];
                 }
             }
+            // 官网内容：独立库 website，表名可由路径直接推出
+            elseif (str_starts_with($path, 'website/')) {
+                $data = $this->resolveWebsiteBeforeVal($path, $request);
+            }
             // 打款记录 和 邮件发送 是纯新增，before_val 为 null
             // streamer/payouts, mails/send → 不查询
 
@@ -261,5 +280,46 @@ class AdminRequestLog
             Log::error('[admin:oplog] resolve before_val failed: ' . $e->getMessage());
             return null;
         }
+    }
+
+    /**
+     * 官网内容改动前的原始记录
+     *
+     * 配置是批量提交的，按提交的 id 集合一次性取回；其余模块按单个 id 取。
+     */
+    private function resolveWebsiteBeforeVal(string $path, Request $request): ?array
+    {
+        $tables = [
+            'website/config'       => 'site_config',
+            'website/products'     => 'site_product',
+            'website/capabilities' => 'site_capability',
+            'website/milestones'   => 'site_milestone',
+            'website/jobs'         => 'site_job',
+            'website/messages'     => 'site_message',
+        ];
+
+        $table = null;
+        foreach ($tables as $prefix => $name) {
+            if (str_starts_with($path, $prefix)) {
+                $table = $name;
+                break;
+            }
+        }
+        if ($table === null) {
+            return null;
+        }
+
+        if ($table === 'site_config') {
+            $ids = array_filter(array_map(
+                static fn($item) => (int) ($item['id'] ?? 0),
+                (array) $request->post('items', [])
+            ));
+            return $ids
+                ? Db::connect('website')->name($table)->whereIn('id', $ids)->select()->toArray()
+                : null;
+        }
+
+        $id = (int) $request->post('id', 0);
+        return $id > 0 ? Db::connect('website')->name($table)->where('id', $id)->find() : null;
     }
 }

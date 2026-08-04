@@ -53,6 +53,27 @@
           <span class="menu-icon">🛒</span>
           <span>订单查询</span>
         </el-menu-item>
+        <div class="menu-section-title">🌐 公司官网</div>
+        <el-menu-item index="/website-config">
+          <span class="menu-icon">⚙️</span>
+          <span>官网配置</span>
+        </el-menu-item>
+        <el-menu-item index="/website-products">
+          <span class="menu-icon">📦</span>
+          <span>官网产品</span>
+        </el-menu-item>
+        <el-menu-item index="/website-content">
+          <span class="menu-icon">🧩</span>
+          <span>内容板块</span>
+        </el-menu-item>
+        <el-menu-item index="/website-jobs">
+          <span class="menu-icon">💼</span>
+          <span>官网招聘</span>
+        </el-menu-item>
+        <el-menu-item index="/website-messages">
+          <span class="menu-icon">📨</span>
+          <span>官网留言</span>
+        </el-menu-item>
       </el-menu>
       <div class="logout" @click="logout">
         <span>退出登录</span>

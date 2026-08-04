@@ -37,6 +37,25 @@ Route::group('admin', function () {
         Route::get('operation-logs', 'Admin/operationLogList');
         Route::get('leaderboard', 'Admin/leaderboardList');
         Route::get('orders', 'Admin/orderList');
+
+        // 公司官网内容（独立库 qianzhi_website，不接多项目切换）
+        Route::get('website/config', 'Website/configList');
+        Route::post('website/config', 'Website/configSave');
+        Route::get('website/products', 'Website/productList');
+        Route::post('website/products', 'Website/productSave');
+        Route::delete('website/products', 'Website/productDelete');
+        Route::get('website/capabilities', 'Website/capabilityList');
+        Route::post('website/capabilities', 'Website/capabilitySave');
+        Route::delete('website/capabilities', 'Website/capabilityDelete');
+        Route::get('website/milestones', 'Website/milestoneList');
+        Route::post('website/milestones', 'Website/milestoneSave');
+        Route::delete('website/milestones', 'Website/milestoneDelete');
+        Route::get('website/jobs', 'Website/jobList');
+        Route::post('website/jobs', 'Website/jobSave');
+        Route::delete('website/jobs', 'Website/jobDelete');
+        Route::get('website/messages', 'Website/messageList');
+        Route::post('website/messages/read', 'Website/messageRead');
+        Route::delete('website/messages', 'Website/messageDelete');
     })->middleware([
         \app\middleware\AdminAuth::class,
         \app\middleware\AdminRequestLog::class,

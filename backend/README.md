@@ -77,6 +77,13 @@ admin/
 ├── 📜 操作日志     → /logs            → OperationLog.vue
 ├── 🛒 订单查询     → /orders          → OrderQuery.vue
 ├── 💬 意见反馈     → /feedbacks       → Feedback.vue
+│
+├── 🌐 公司官网（独立库 qianzhi_website）
+│   ├── ⚙️ 官网配置     → /website-config   → WebsiteConfig.vue
+│   ├── 📦 官网产品     → /website-products → WebsiteProducts.vue
+│   ├── 🧩 内容板块     → /website-content  → WebsiteContent.vue
+│   ├── 💼 官网招聘     → /website-jobs     → WebsiteJobs.vue
+│   └── 📨 官网留言     → /website-messages → WebsiteMessages.vue
 
 独立页面:
 └── 🔐 登录         → /login           → Login.vue
@@ -235,6 +242,54 @@ admin/
 - **Token 有效期**: 7 天
 - **用户表**: `admin_users` (管理库 `qianzhi_admin`)，包含字段 `id`, `username`, `password`, `role`, `is_active`
 
+### 13. 🌐 公司官网 (Website)
+
+维护公司官网 [www.sofun.online](https://www.sofun.online) 的展示内容。官网是独立项目
+（源码 `E:\php\qianzhigame`，ThinkPHP 8 API + Vue 3 SPA），数据在独立库 `qianzhi_website`，
+本后台只做内容维护，不参与官网业务逻辑。
+
+- **数据库连接**: `website`（见 `config/database.php`，未配置 `WEBSITE_DB_*` 时复用 `DB_*` 账号）
+- **控制器**: `app/controller/Website.php` → `app/service/WebsiteService.php`
+- **改完即生效**: 官网每次请求实时读库，保存后刷新页面就能看到，不需要重新部署
+
+#### 13.1 ⚙️ 官网配置 (`/website-config` → `WebsiteConfig.vue`)
+
+按分组编辑官网所有文案，只提交改动过的项。
+
+- **数据库表**: `site_config`
+- **API**: `GET /admin/website/config`、`POST /admin/website/config`（body: `{items: [{id, config_value}]}`）
+- **分组**: `basic` 基础信息 / `home` 首页文案 / `about` 关于我们 / `contact` 联系方式 / `job` 招聘页 / `seo` SEO 设置
+- **多行配置约定**:
+  - `about_intro`：一行一个自然段
+  - `about_values`：一行一条，格式 `标题|描述`
+  - `job_welfare`：一行一条，格式 `emoji|文案`
+  - `job_process`：一行一个步骤
+
+#### 13.2 📦 官网产品 (`/website-products` → `WebsiteProducts.vue`)
+
+- **数据库表**: `site_product`
+- **API**: `GET` / `POST` / `DELETE` `/admin/website/products`
+- **字段**: `name`, `slug`(详情页 URL), `subtitle`, `platform`(wechat/douyin/kuaishou/app), `category`, `cover_url`, `qrcode_url`, `link_url`, `summary`, `description`, `tags`, `user_count`, `rating`, `online_date`, `sort_order`, `is_featured`, `is_active`
+- **注意**: `slug` 唯一，留空会自动生成；`description` 一行一个自然段
+
+#### 13.3 🧩 内容板块 (`/website-content` → `WebsiteContent.vue`)
+
+- **数据库表**: `site_capability`（首页「我们能做什么」卡片）、`site_milestone`（关于我们时间轴）
+- **API**: `GET` / `POST` / `DELETE` `/admin/website/capabilities`、`/admin/website/milestones`
+
+#### 13.4 💼 官网招聘 (`/website-jobs` → `WebsiteJobs.vue`)
+
+- **数据库表**: `site_job`
+- **API**: `GET` / `POST` / `DELETE` `/admin/website/jobs`
+- **字段**: `title`, `department`, `location`, `job_type`, `salary_range`, `experience`, `education`, `headcount`, `duty`, `requirement`, `is_urgent`, `sort_order`, `is_active`
+- **注意**: `duty` / `requirement` 一行一条，官网渲染成列表
+
+#### 13.5 📨 官网留言 (`/website-messages` → `WebsiteMessages.vue`)
+
+- **数据库表**: `site_message`
+- **API**: `GET /admin/website/messages`（分页 + `status=unread|read` 筛选）、`POST /admin/website/messages/read`、`DELETE /admin/website/messages`
+- **来源**: 官网「联系我们」表单，后端做了蜜罐字段 + 同 IP 一分钟限频
+
 <!-- FEATURES-END -->
 
 ---
@@ -281,6 +336,28 @@ admin/
 | GET | `/admin/feedbacks` | 反馈列表（分页+筛选） |
 | POST | `/admin/feedbacks/reply` | 回复反馈并发放奖励 |
 
+### 公司官网（独立库 `qianzhi_website`，控制器 `Website`）
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/admin/website/config` | 官网配置（按分组返回） |
+| POST | `/admin/website/config` | 批量保存配置项 |
+| GET | `/admin/website/products` | 官网产品列表 |
+| POST | `/admin/website/products` | 新增/更新产品 |
+| DELETE | `/admin/website/products` | 删除产品 |
+| GET | `/admin/website/capabilities` | 核心能力列表 |
+| POST | `/admin/website/capabilities` | 新增/更新核心能力 |
+| DELETE | `/admin/website/capabilities` | 删除核心能力 |
+| GET | `/admin/website/milestones` | 发展历程列表 |
+| POST | `/admin/website/milestones` | 新增/更新发展历程 |
+| DELETE | `/admin/website/milestones` | 删除发展历程 |
+| GET | `/admin/website/jobs` | 招聘岗位列表 |
+| POST | `/admin/website/jobs` | 新增/更新岗位 |
+| DELETE | `/admin/website/jobs` | 删除岗位 |
+| GET | `/admin/website/messages` | 官网留言列表（分页+状态筛选） |
+| POST | `/admin/website/messages/read` | 标记留言已处理 |
+| DELETE | `/admin/website/messages` | 删除留言 |
+
 <!-- API-END -->
 
 ---
@@ -308,6 +385,23 @@ admin/
 | `pun_game_mail` | 游戏内邮件记录 | 邮件发送 |
 | `pun_game_feedback` | 用户意见反馈 | 意见反馈 |
 | `pay_order` | 支付订单 | 订单查询 |
+
+### 官网库 (`qianzhi_website`，连接名 `website`)
+
+表所有权归官网项目（`E:\php\qianzhigame`），DDL 见该项目的 `docs/database.sql`。
+本后台只做内容维护，改表结构要去官网项目改。
+
+| 表名 | 说明 | 关联模块 |
+|------|------|----------|
+| `site_config` | 官网文案/联系方式配置 | 官网配置 |
+| `site_product` | 产品中心 | 官网产品 |
+| `site_capability` | 首页核心能力卡片 | 内容板块 |
+| `site_milestone` | 关于我们发展历程 | 内容板块 |
+| `site_job` | 招聘岗位 | 官网招聘 |
+| `site_message` | 联系我们表单留言 | 官网留言 |
+
+> `.env` 未配置 `WEBSITE_DB_*` 时，自动复用 `DB_HOST/DB_USER/DB_PASS/DB_PORT`，
+> 库名默认 `qianzhi_website`。生产环境如果官网库账号不同，再单独配置。
 
 ---
 
