@@ -93,35 +93,90 @@ class WebsiteService
 
     public function productSave(array $data, ?int $id = null): void
     {
-        $row = [
-            'name'        => trim($data['name'] ?? ''),
-            'slug'        => trim($data['slug'] ?? ''),
-            'subtitle'    => trim($data['subtitle'] ?? ''),
-            'platform'    => $data['platform'] ?? 'wechat',
-            'category'    => trim($data['category'] ?? ''),
-            'cover_url'   => trim($data['cover_url'] ?? ''),
-            'qrcode_url'  => trim($data['qrcode_url'] ?? ''),
-            'link_url'    => trim($data['link_url'] ?? ''),
-            'summary'     => trim($data['summary'] ?? ''),
-            'description' => $data['description'] ?? '',
-            'tags'        => trim($data['tags'] ?? ''),
-            'user_count'  => trim($data['user_count'] ?? ''),
-            'rating'      => trim($data['rating'] ?? ''),
-            'online_date' => trim($data['online_date'] ?? ''),
-            'sort_order'  => (int) ($data['sort_order'] ?? 0),
-            'is_featured' => (int) ($data['is_featured'] ?? 0),
-            'is_active'   => (int) ($data['is_active'] ?? 1),
-            'updated_at'  => date('Y-m-d H:i:s'),
-        ];
-
-        // slug 是产品详情页的 URL，留空时用时间戳兜底避免唯一索引冲突
-        if ($row['slug'] === '') {
-            $row['slug'] = 'p' . time();
-        }
-
         if ($id) {
-            $this->db('site_product')->where('id', $id)->update($row);
+            $row = [];
+            if (array_key_exists('name', $data)) {
+                $row['name'] = trim((string) $data['name']);
+            }
+            if (array_key_exists('slug', $data)) {
+                $row['slug'] = trim((string) $data['slug']);
+            }
+            if (array_key_exists('subtitle', $data)) {
+                $row['subtitle'] = trim((string) $data['subtitle']);
+            }
+            if (array_key_exists('platform', $data)) {
+                $row['platform'] = (string) $data['platform'];
+            }
+            if (array_key_exists('category', $data)) {
+                $row['category'] = trim((string) $data['category']);
+            }
+            if (array_key_exists('cover_url', $data)) {
+                $row['cover_url'] = trim((string) $data['cover_url']);
+            }
+            if (array_key_exists('qrcode_url', $data)) {
+                $row['qrcode_url'] = trim((string) $data['qrcode_url']);
+            }
+            if (array_key_exists('link_url', $data)) {
+                $row['link_url'] = trim((string) $data['link_url']);
+            }
+            if (array_key_exists('summary', $data)) {
+                $row['summary'] = trim((string) $data['summary']);
+            }
+            if (array_key_exists('description', $data)) {
+                $row['description'] = (string) $data['description'];
+            }
+            if (array_key_exists('tags', $data)) {
+                $row['tags'] = trim((string) $data['tags']);
+            }
+            if (array_key_exists('user_count', $data)) {
+                $row['user_count'] = trim((string) $data['user_count']);
+            }
+            if (array_key_exists('rating', $data)) {
+                $row['rating'] = trim((string) $data['rating']);
+            }
+            if (array_key_exists('online_date', $data)) {
+                $row['online_date'] = trim((string) $data['online_date']);
+            }
+            if (array_key_exists('sort_order', $data)) {
+                $row['sort_order'] = (int) $data['sort_order'];
+            }
+            if (array_key_exists('is_featured', $data)) {
+                $row['is_featured'] = (int) $data['is_featured'];
+            }
+            if (array_key_exists('is_active', $data)) {
+                $row['is_active'] = (int) $data['is_active'];
+            }
+
+            if ($row !== []) {
+                $row['updated_at'] = date('Y-m-d H:i:s');
+                $this->db('site_product')->where('id', $id)->update($row);
+            }
         } else {
+            $row = [
+                'name'        => trim($data['name'] ?? ''),
+                'slug'        => trim($data['slug'] ?? ''),
+                'subtitle'    => trim($data['subtitle'] ?? ''),
+                'platform'    => $data['platform'] ?? 'wechat',
+                'category'    => trim($data['category'] ?? ''),
+                'cover_url'   => trim($data['cover_url'] ?? ''),
+                'qrcode_url'  => trim($data['qrcode_url'] ?? ''),
+                'link_url'    => trim($data['link_url'] ?? ''),
+                'summary'     => trim($data['summary'] ?? ''),
+                'description' => $data['description'] ?? '',
+                'tags'        => trim($data['tags'] ?? ''),
+                'user_count'  => trim($data['user_count'] ?? ''),
+                'rating'      => trim($data['rating'] ?? ''),
+                'online_date' => trim($data['online_date'] ?? ''),
+                'sort_order'  => (int) ($data['sort_order'] ?? 0),
+                'is_featured' => (int) ($data['is_featured'] ?? 0),
+                'is_active'   => (int) ($data['is_active'] ?? 1),
+                'updated_at'  => date('Y-m-d H:i:s'),
+            ];
+
+            // slug 是产品详情页的 URL，留空时用时间戳兜底避免唯一索引冲突
+            if ($row['slug'] === '') {
+                $row['slug'] = 'p' . time();
+            }
             $row['created_at'] = date('Y-m-d H:i:s');
             $this->db('site_product')->insert($row);
         }
@@ -141,6 +196,29 @@ class WebsiteService
 
     public function capabilitySave(array $data, ?int $id = null): void
     {
+        if ($id) {
+            $row = [];
+            if (array_key_exists('icon', $data)) {
+                $row['icon'] = trim((string) $data['icon']);
+            }
+            if (array_key_exists('title', $data)) {
+                $row['title'] = trim((string) $data['title']);
+            }
+            if (array_key_exists('description', $data)) {
+                $row['description'] = trim((string) $data['description']);
+            }
+            if (array_key_exists('sort_order', $data)) {
+                $row['sort_order'] = (int) $data['sort_order'];
+            }
+            if (array_key_exists('is_active', $data)) {
+                $row['is_active'] = (int) $data['is_active'];
+            }
+            if ($row !== []) {
+                $this->db('site_capability')->where('id', $id)->update($row);
+            }
+            return;
+        }
+
         $row = [
             'icon'        => trim($data['icon'] ?? ''),
             'title'       => trim($data['title'] ?? ''),
@@ -149,9 +227,7 @@ class WebsiteService
             'is_active'   => (int) ($data['is_active'] ?? 1),
         ];
 
-        $id
-            ? $this->db('site_capability')->where('id', $id)->update($row)
-            : $this->db('site_capability')->insert($row);
+        $this->db('site_capability')->insert($row);
     }
 
     public function capabilityDelete(int $id): void
@@ -168,6 +244,29 @@ class WebsiteService
 
     public function milestoneSave(array $data, ?int $id = null): void
     {
+        if ($id) {
+            $row = [];
+            if (array_key_exists('date_label', $data)) {
+                $row['date_label'] = trim((string) $data['date_label']);
+            }
+            if (array_key_exists('title', $data)) {
+                $row['title'] = trim((string) $data['title']);
+            }
+            if (array_key_exists('description', $data)) {
+                $row['description'] = trim((string) $data['description']);
+            }
+            if (array_key_exists('sort_order', $data)) {
+                $row['sort_order'] = (int) $data['sort_order'];
+            }
+            if (array_key_exists('is_active', $data)) {
+                $row['is_active'] = (int) $data['is_active'];
+            }
+            if ($row !== []) {
+                $this->db('site_milestone')->where('id', $id)->update($row);
+            }
+            return;
+        }
+
         $row = [
             'date_label'  => trim($data['date_label'] ?? ''),
             'title'       => trim($data['title'] ?? ''),
@@ -176,9 +275,7 @@ class WebsiteService
             'is_active'   => (int) ($data['is_active'] ?? 1),
         ];
 
-        $id
-            ? $this->db('site_milestone')->where('id', $id)->update($row)
-            : $this->db('site_milestone')->insert($row);
+        $this->db('site_milestone')->insert($row);
     }
 
     public function milestoneDelete(int $id): void
@@ -195,26 +292,69 @@ class WebsiteService
 
     public function jobSave(array $data, ?int $id = null): void
     {
-        $row = [
-            'title'        => trim($data['title'] ?? ''),
-            'department'   => trim($data['department'] ?? ''),
-            'location'     => trim($data['location'] ?? '厦门'),
-            'job_type'     => trim($data['job_type'] ?? '全职'),
-            'salary_range' => trim($data['salary_range'] ?? ''),
-            'experience'   => trim($data['experience'] ?? ''),
-            'education'    => trim($data['education'] ?? ''),
-            'headcount'    => max(1, (int) ($data['headcount'] ?? 1)),
-            'duty'         => $data['duty'] ?? '',
-            'requirement'  => $data['requirement'] ?? '',
-            'is_urgent'    => (int) ($data['is_urgent'] ?? 0),
-            'sort_order'   => (int) ($data['sort_order'] ?? 0),
-            'is_active'    => (int) ($data['is_active'] ?? 1),
-            'updated_at'   => date('Y-m-d H:i:s'),
-        ];
-
         if ($id) {
-            $this->db('site_job')->where('id', $id)->update($row);
+            $row = [];
+            if (array_key_exists('title', $data)) {
+                $row['title'] = trim((string) $data['title']);
+            }
+            if (array_key_exists('department', $data)) {
+                $row['department'] = trim((string) $data['department']);
+            }
+            if (array_key_exists('location', $data)) {
+                $row['location'] = trim((string) $data['location']);
+            }
+            if (array_key_exists('job_type', $data)) {
+                $row['job_type'] = trim((string) $data['job_type']);
+            }
+            if (array_key_exists('salary_range', $data)) {
+                $row['salary_range'] = trim((string) $data['salary_range']);
+            }
+            if (array_key_exists('experience', $data)) {
+                $row['experience'] = trim((string) $data['experience']);
+            }
+            if (array_key_exists('education', $data)) {
+                $row['education'] = trim((string) $data['education']);
+            }
+            if (array_key_exists('headcount', $data)) {
+                $row['headcount'] = max(1, (int) $data['headcount']);
+            }
+            if (array_key_exists('duty', $data)) {
+                $row['duty'] = (string) $data['duty'];
+            }
+            if (array_key_exists('requirement', $data)) {
+                $row['requirement'] = (string) $data['requirement'];
+            }
+            if (array_key_exists('is_urgent', $data)) {
+                $row['is_urgent'] = (int) $data['is_urgent'];
+            }
+            if (array_key_exists('sort_order', $data)) {
+                $row['sort_order'] = (int) $data['sort_order'];
+            }
+            if (array_key_exists('is_active', $data)) {
+                $row['is_active'] = (int) $data['is_active'];
+            }
+
+            if ($row !== []) {
+                $row['updated_at'] = date('Y-m-d H:i:s');
+                $this->db('site_job')->where('id', $id)->update($row);
+            }
         } else {
+            $row = [
+                'title'        => trim($data['title'] ?? ''),
+                'department'   => trim($data['department'] ?? ''),
+                'location'     => trim($data['location'] ?? '厦门'),
+                'job_type'     => trim($data['job_type'] ?? '全职'),
+                'salary_range' => trim($data['salary_range'] ?? ''),
+                'experience'   => trim($data['experience'] ?? ''),
+                'education'    => trim($data['education'] ?? ''),
+                'headcount'    => max(1, (int) ($data['headcount'] ?? 1)),
+                'duty'         => $data['duty'] ?? '',
+                'requirement'  => $data['requirement'] ?? '',
+                'is_urgent'    => (int) ($data['is_urgent'] ?? 0),
+                'sort_order'   => (int) ($data['sort_order'] ?? 0),
+                'is_active'    => (int) ($data['is_active'] ?? 1),
+                'updated_at'   => date('Y-m-d H:i:s'),
+            ];
             $row['created_at'] = date('Y-m-d H:i:s');
             $this->db('site_job')->insert($row);
         }

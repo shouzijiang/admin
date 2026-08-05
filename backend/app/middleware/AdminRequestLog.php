@@ -106,13 +106,19 @@ class AdminRequestLog
             // 提取 target（如 user_id, id 等）
             $target = $this->resolveTarget($request);
 
-            // 请求参数作为 after_val
+            // 成功操作优先记录数据库中的真实变更后值，避免仅记录 id
             $afterVal = null;
-            $allParams = $request->param();
-            // 过滤掉通用参数
-            unset($allParams['project']);
-            if (!empty($allParams)) {
-                $afterVal = json_encode($allParams, JSON_UNESCAPED_UNICODE);
+            if ($httpStatus === 200) {
+                $afterVal = $this->resolveAfterVal($request);
+            }
+
+            // 回查不到时，兜底记录请求参数
+            if ($afterVal === null) {
+                $allParams = $request->param();
+                unset($allParams['project']);
+                if (!empty($allParams)) {
+                    $afterVal = json_encode($allParams, JSON_UNESCAPED_UNICODE);
+                }
             }
 
             Db::name('admin_operation_logs')->insert([
@@ -266,7 +272,7 @@ class AdminRequestLog
             }
             // 官网内容：独立库 website，表名可由路径直接推出
             elseif (str_starts_with($path, 'website/')) {
-                $data = $this->resolveWebsiteBeforeVal($path, $request);
+                $data = $this->resolveWebsiteSnapshot($path, $request);
             }
             // 打款记录 和 邮件发送 是纯新增，before_val 为 null
             // streamer/payouts, mails/send → 不查询
@@ -283,11 +289,113 @@ class AdminRequestLog
     }
 
     /**
+     * 在执行业务逻辑之后，查询已被修改的记录作为 after_val
+     */
+    private function resolveAfterVal(Request $request): ?string
+    {
+        try {
+            $path = trim($request->pathinfo(), '/');
+            if (str_starts_with($path, 'admin/')) {
+                $path = substr($path, 6);
+            }
+            $project = $request->param('project', $request->post('project', 'think1'));
+
+            $data = null;
+
+            // 活动配置: pun_config
+            if (str_starts_with($path, 'activity-float')) {
+                $id = (int) $request->post('id', 0);
+                if ($id > 0) {
+                    $data = Db::connect($project)->name('pun_config')->where('id', $id)->find();
+                }
+            }
+            // 公告管理: pun_game_changelog
+            elseif (str_starts_with($path, 'announcements')) {
+                $id = (int) $request->post('id', 0);
+                if ($id > 0) {
+                    $data = Db::connect($project)->name('pun_game_changelog')->where('id', $id)->find();
+                }
+            }
+            // 用户解字次数: pun_user_hint_quota
+            elseif (str_starts_with($path, 'users/quota')) {
+                $uid = (int) $request->post('user_id', 0);
+                if ($uid > 0) {
+                    $data = Db::connect($project)->name('pun_user_hint_quota')->where('user_id', $uid)->find();
+                }
+            }
+            // 用户通关记录: pun_game_level_progress + pun_game_rank
+            elseif (str_starts_with($path, 'users/progress')) {
+                $uid = (int) $request->post('user_id', 0);
+                if ($uid > 0) {
+                    $progress = Db::connect($project)->name('pun_game_level_progress')->where('user_id', $uid)->find();
+                    $rank = Db::connect($project)->name('pun_game_rank')->where('user_id', $uid)->find();
+                    $data = ['progress' => $progress, 'rank' => $rank];
+                }
+            }
+            // 用户VIP: pun_vip
+            elseif (str_starts_with($path, 'users/vip')) {
+                $uid = (int) $request->post('user_id', 0);
+                if ($uid > 0) {
+                    $data = Db::connect($project)->name('pun_vip')->where('user_id', $uid)->find();
+                }
+            }
+            // 用户备注: users.remark + pun_vip.remark
+            elseif (str_starts_with($path, 'users/remark')) {
+                $uid = (int) $request->post('user_id', 0);
+                if ($uid > 0) {
+                    $user = Db::connect($project)->name('users')->where('id', $uid)->field('id, remark')->find();
+                    $vip  = Db::connect($project)->name('pun_vip')->where('user_id', $uid)->field('user_id, remark')->find();
+                    $data = ['user' => $user, 'vip' => $vip];
+                }
+            }
+            // 渠道单价: pun_game_channel_unit_price
+            elseif (str_starts_with($path, 'streamer/unit-prices')) {
+                $statDate = $request->post('stat_date', '');
+                if ($statDate !== '') {
+                    $data = Db::connect($project)->name('pun_game_channel_unit_price')->where('stat_date', $statDate)->find();
+                }
+            }
+            // 邮件更新: pun_game_mail
+            elseif (str_starts_with($path, 'mails/update')) {
+                $id = (int) $request->post('id', 0);
+                if ($id > 0) {
+                    $data = Db::connect($project)->name('pun_game_mail')->where('id', $id)->find();
+                }
+            }
+            // 反馈回复: pun_game_feedback (回复和更新回复都查反馈记录)
+            elseif (str_starts_with($path, 'feedbacks/reply')) {
+                $id = (int) $request->post('id', 0);
+                if ($id > 0) {
+                    $fb = Db::connect($project)->name('pun_game_feedback')->where('id', $id)->find();
+                    $mail = null;
+                    if ($fb && !empty($fb['mail_id'])) {
+                        $mail = Db::connect($project)->name('pun_game_mail')->where('id', (int) $fb['mail_id'])->find();
+                    }
+                    $data = ['feedback' => $fb, 'reply_mail' => $mail];
+                }
+            }
+            // 官网内容：独立库 website
+            elseif (str_starts_with($path, 'website/')) {
+                $data = $this->resolveWebsiteSnapshot($path, $request);
+            }
+
+            if ($data === null || (is_array($data) && empty($data))) {
+                return null;
+            }
+
+            return json_encode($data, JSON_UNESCAPED_UNICODE);
+        } catch (\Throwable $e) {
+            Log::error('[admin:oplog] resolve after_val failed: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
      * 官网内容改动前的原始记录
      *
      * 配置是批量提交的，按提交的 id 集合一次性取回；其余模块按单个 id 取。
      */
-    private function resolveWebsiteBeforeVal(string $path, Request $request): ?array
+    private function resolveWebsiteSnapshot(string $path, Request $request): ?array
     {
         $tables = [
             'website/config'       => 'site_config',

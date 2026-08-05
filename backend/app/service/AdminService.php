@@ -90,18 +90,43 @@ class AdminService
 
     public function saveActivityFloat(string $project, array $data, ?int $id = null): void
     {
-        $row = [
-            'enabled'  => (int) ($data['enabled'] ?? 0),
-            'label'    => $data['label'] ?? '',
-            'image'    => $data['image'] ?? '',
-            'link'     => $data['link'] ?? '',
-            'start_at' => $data['start_at'] ?: null,
-            'end_at'   => $data['end_at'] ?: null,
-            'remark'   => $data['remark'] ?? '',
-        ];
         if ($id) {
-            Db::connect($project)->name('pun_config')->where('id', $id)->update($row);
+            $row = [];
+            if (array_key_exists('enabled', $data)) {
+                $row['enabled'] = (int) $data['enabled'];
+            }
+            if (array_key_exists('label', $data)) {
+                $row['label'] = (string) $data['label'];
+            }
+            if (array_key_exists('image', $data)) {
+                $row['image'] = (string) $data['image'];
+            }
+            if (array_key_exists('link', $data)) {
+                $row['link'] = (string) $data['link'];
+            }
+            if (array_key_exists('start_at', $data)) {
+                $row['start_at'] = $data['start_at'] ?: null;
+            }
+            if (array_key_exists('end_at', $data)) {
+                $row['end_at'] = $data['end_at'] ?: null;
+            }
+            if (array_key_exists('remark', $data)) {
+                $row['remark'] = (string) $data['remark'];
+            }
+
+            if ($row !== []) {
+                Db::connect($project)->name('pun_config')->where('id', $id)->update($row);
+            }
         } else {
+            $row = [
+                'enabled'  => (int) ($data['enabled'] ?? 0),
+                'label'    => $data['label'] ?? '',
+                'image'    => $data['image'] ?? '',
+                'link'     => $data['link'] ?? '',
+                'start_at' => ($data['start_at'] ?? '') ?: null,
+                'end_at'   => ($data['end_at'] ?? '') ?: null,
+                'remark'   => $data['remark'] ?? '',
+            ];
             Db::connect($project)->name('pun_config')->insert($row);
         }
     }
@@ -122,17 +147,41 @@ class AdminService
 
     public function saveAlbumCategory(string $project, array $data, ?int $id = null): void
     {
-        $row = [
-            'slug'        => $data['slug'] ?? '',
-            'label'       => $data['label'] ?? '',
-            'icon'        => $data['icon'] ?? '',
-            'sort_order'  => (int) ($data['sort_order'] ?? 0),
-            'is_active'   => (int) ($data['is_active'] ?? 1),
-            'answer_types'=> isset($data['answer_types']) ? json_encode($data['answer_types'], JSON_UNESCAPED_UNICODE) : null,
-        ];
         if ($id) {
-            Db::connect($project)->name('pun_album_category')->where('id', $id)->update($row);
+            $row = [];
+            if (array_key_exists('slug', $data)) {
+                $row['slug'] = (string) $data['slug'];
+            }
+            if (array_key_exists('label', $data)) {
+                $row['label'] = (string) $data['label'];
+            }
+            if (array_key_exists('icon', $data)) {
+                $row['icon'] = (string) $data['icon'];
+            }
+            if (array_key_exists('sort_order', $data)) {
+                $row['sort_order'] = (int) $data['sort_order'];
+            }
+            if (array_key_exists('is_active', $data)) {
+                $row['is_active'] = (int) $data['is_active'];
+            }
+            if (array_key_exists('answer_types', $data)) {
+                $row['answer_types'] = $data['answer_types'] === null
+                    ? null
+                    : json_encode($data['answer_types'], JSON_UNESCAPED_UNICODE);
+            }
+
+            if ($row !== []) {
+                Db::connect($project)->name('pun_album_category')->where('id', $id)->update($row);
+            }
         } else {
+            $row = [
+                'slug'        => $data['slug'] ?? '',
+                'label'       => $data['label'] ?? '',
+                'icon'        => $data['icon'] ?? '',
+                'sort_order'  => (int) ($data['sort_order'] ?? 0),
+                'is_active'   => (int) ($data['is_active'] ?? 1),
+                'answer_types'=> isset($data['answer_types']) ? json_encode($data['answer_types'], JSON_UNESCAPED_UNICODE) : null,
+            ];
             Db::connect($project)->name('pun_album_category')->insert($row);
         }
     }
@@ -154,19 +203,43 @@ class AdminService
 
     public function saveAnnouncement(string $project, array $data, ?int $id = null): void
     {
-        $row = [
-            'version_code'   => $data['version_code'] ?? '',
-            'title'          => $data['title'] ?? '',
-            'body'           => $data['body'] ?? '',
-            'changelog_type' => in_array($data['changelog_type'] ?? '', ['normal', 'notice'], true)
-                ? $data['changelog_type']
-                : 'normal',
-            'is_published'   => (int) ($data['is_published'] ?? 0),
-            'published_at'   => $data['published_at'] ?? date('Y-m-d H:i:s'),
-        ];
         if ($id) {
-            Db::connect($project)->name('pun_game_changelog')->where('id', $id)->update($row);
+            $row = [];
+            if (array_key_exists('version_code', $data)) {
+                $row['version_code'] = (string) $data['version_code'];
+            }
+            if (array_key_exists('title', $data)) {
+                $row['title'] = (string) $data['title'];
+            }
+            if (array_key_exists('body', $data)) {
+                $row['body'] = (string) $data['body'];
+            }
+            if (array_key_exists('changelog_type', $data)) {
+                $row['changelog_type'] = in_array($data['changelog_type'], ['normal', 'notice'], true)
+                    ? $data['changelog_type']
+                    : 'normal';
+            }
+            if (array_key_exists('is_published', $data)) {
+                $row['is_published'] = (int) $data['is_published'];
+            }
+            if (array_key_exists('published_at', $data)) {
+                $row['published_at'] = $data['published_at'];
+            }
+
+            if ($row !== []) {
+                Db::connect($project)->name('pun_game_changelog')->where('id', $id)->update($row);
+            }
         } else {
+            $row = [
+                'version_code'   => $data['version_code'] ?? '',
+                'title'          => $data['title'] ?? '',
+                'body'           => $data['body'] ?? '',
+                'changelog_type' => in_array($data['changelog_type'] ?? '', ['normal', 'notice'], true)
+                    ? $data['changelog_type']
+                    : 'normal',
+                'is_published'   => (int) ($data['is_published'] ?? 0),
+                'published_at'   => $data['published_at'] ?? date('Y-m-d H:i:s'),
+            ];
             Db::connect($project)->name('pun_game_changelog')->insert($row);
         }
     }
