@@ -139,19 +139,28 @@ import http from '../api/index.js'
 const REPLY_TEMPLATES = [
   {
     label: '问题已采纳（默认）',
-    content: '感谢您的反馈。【{content}】问题已采纳。奖励查看答案次数{quota}，奖励已发放。'
+    content: '感谢您的反馈。【{content}】问题已采纳。奖励查看答案次数{quota}，奖励已发放。',
+    defaultQuota: 3,
   },
   {
     label: '问题已修复',
-    content: '感谢您的反馈。【{content}】问题已修复。奖励查看答案次数{quota}，奖励已发放。'
+    content: '感谢您的反馈。【{content}】问题已修复。奖励查看答案次数{quota}，奖励已发放。',
+    defaultQuota: 3,
   },
   {
     label: '需要更多信息',
-    content: '感谢您的反馈。关于【{content}】问题，我们需要更多信息，请详细描述操作步骤。'
+    content: '感谢您的反馈。关于【{content}】问题，我们需要更多信息，请详细描述操作步骤。',
+    defaultQuota: 0,
+  },
+  {
+    label: '感谢反馈（每日任务）',
+    content: '感谢反馈，可以做下每日任务领取查看答案次数哦~',
+    defaultQuota: 0,
   },
   {
     label: '手动输入',
-    content: ''
+    content: '',
+    defaultQuota: 0,
   }
 ]
 
@@ -228,8 +237,8 @@ function openReplyDialog(row) {
 function applyTemplate(label) {
   const tpl = REPLY_TEMPLATES.find(t => t.label === label)
   if (!tpl) return
+  replyQuota.value = tpl.defaultQuota
   if (label === '手动输入') {
-    replyQuota.value = 0
     replyContent.value = ''
     return
   }

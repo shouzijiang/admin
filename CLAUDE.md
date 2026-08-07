@@ -13,7 +13,8 @@
 
 ### 报错与修复记录
 
-- 操作日志显示“下架后变更后值只剩 `{\"id\":48}`，疑似内容被清空” → after_val 取的是请求参数而非数据库变更后快照，且历史上 DELETE 改 POST 后未做回归引发误判风险 → 操作日志改为成功后优先回查 DB 作为 after_val；公告更新改为仅更新传入字段；下架接口仅更新 `is_published`。
+- 操作日志显示”下架后变更后值只剩 `{\”id\”:48}`，疑似内容被清空” → after_val 取的是请求参数而非数据库变更后快照，且历史上 DELETE 改 POST 后未做回归引发误判风险 → 操作日志改为成功后优先回查 DB 作为 after_val；公告更新改为仅更新传入字段；下架接口仅更新 `is_published`。
+- 官网留言接口 `/admin/website/messages` 返回 404：`method not exists:app\controller\Admin->website()` → 路由和控制器代码都正确，但生产环境路由缓存了旧路由表，新增的 `website/messages` 路由未被识别，ThinkPHP 回退到默认路由解析 → **任何新增/修改路由部署到生产后，必须执行 `php think route:clear` 清除路由缓存。**
 
 ---
 
@@ -91,3 +92,33 @@ README 中有以下标记区域需要同步更新：
 ## 游戏库表结构参考
 
 游戏库（`think1` / `sofun_online`）DDL 不在本项目的 `docs/database.sql` 中，而在 **`E:\php\think1\backend\docs\database.sql`**。新增功能前先到该文件确认表字段，避免按不存在的字段写 SQL。
+
+## 公司官网管理（`E:\php\qianzhigame`）
+
+本项目的「🌐 公司官网」菜单组管理的是独立项目 **`E:\php\qianzhigame`**（公司官方网站），非游戏业务。
+
+### 关键差异
+
+| 项目 | admin 后台 | qianzhigame 官网 |
+|------|-----------|-----------------|
+| 定位 | 游戏 + 官网的内容管理 | 公司官网前台展示 |
+| 数据库 | `sofun_online`（游戏）、`qianzhi_website`（官网） | 独立库 `qianzhi_www` |
+| 控制器 | `Admin.php`（游戏）、`Website.php`（官网） | `Api.php` |
+| Readme | [backend/README.md](backend/README.md) | [E:\php\qianzhigame\CLAUDE.md](E:\php\qianzhigame\CLAUDE.md) |
+
+### 官网相关代码位置
+
+| 文件 | 说明 |
+|------|------|
+| `backend/route/admin.php` `#41-58` | 官网路由（`website/*` 全部在认证组内） |
+| `backend/app/controller/Website.php` | 官网控制器（独立于 Admin.php，不传 project） |
+| `backend/app/service/WebsiteService.php` | 官网业务逻辑（连接 `qianzhi_website` 库） |
+| `backend/config/database.php` | `website` 连接配置 |
+| `backend/app/middleware/AdminRequestLog.php` | 官网操作日志（`website/*` 路径映射到 `site_*` 表） |
+
+### 部署注意事项
+
+1. **新增/修改 `website/*` 路由后，部署到生产必须清路由缓存**：`php think route:clear`
+2. 官网表 DDL 在 `E:\php\qianzhigame\docs\database.sql`，admin 只增删改数据，不建表
+3. 官网数据库连接名是 `website`，不走多项目切换，所有 `Website` 控制器方法不需要 `project` 参数
+4. 官网前台读的是 `qianzhi_www` 库（由 qianzhigame 项目的 `.env` 控制），admin 写的是 `qianzhi_website` 库 — 确认两个库名是否指向同一库，部署时注意 `.env` 配置

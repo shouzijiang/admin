@@ -16,6 +16,7 @@
               <el-option label="小红书" value="xhs" />
               <el-option label="故事" value="story" />
               <el-option label="歌曲" value="song" />
+              <el-option label="谐音" value="homophone" />
             </el-select>
           </el-form-item>
           <el-form-item label="排序方式" class="sort-order-item">
@@ -44,6 +45,7 @@
       <el-table-column prop="xhs_count" label="小红书最高关" width="160" sortable />
       <el-table-column prop="story_count" label="故事最高关" width="140" sortable />
       <el-table-column prop="song_count" label="歌曲最高关" width="140" sortable />
+      <el-table-column prop="homophone_count" label="谐音最高关" width="140" sortable />
       <el-table-column label="综合" width="100">
         <template #default="{ row }">
           {{ totalCount(row) }}
@@ -88,7 +90,7 @@ const filters = ref({
 
 function totalCount(row) {
   const sum = (a, b) => Math.max(0, a) + Math.max(0, b)
-  return [row.basic_count, row.classic_count, row.xhs_count, row.story_count, row.song_count].reduce(sum, 0)
+  return [row.basic_count, row.classic_count, row.xhs_count, row.story_count, row.song_count, row.homophone_count].reduce(sum, 0)
 }
 
 async function fetchList() {

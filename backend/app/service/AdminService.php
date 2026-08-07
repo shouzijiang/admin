@@ -280,7 +280,7 @@ class AdminService
         $quota = Db::connect($project)->name('pun_user_hint_quota')->where('user_id', $userId)
             ->field('quota, total_used')->find();
         $rank = Db::connect($project)->name('pun_game_rank')->where('user_id', $userId)
-            ->field('max_level, max_level_mid, max_level_xhs, max_level_story, max_level_song')->find();
+            ->field('max_level, max_level_mid, max_level_xhs, max_level_story, max_level_song, max_level_homophone')->find();
         $progress = Db::connect($project)->name('pun_game_level_progress')->where('user_id', $userId)->find();
         $vip = Db::connect($project)->name('pun_vip')->where('user_id', $userId)
             ->field('expire_at, trial_used, remark')->find();
@@ -376,11 +376,12 @@ class AdminService
             'passed_levels_song' => '歌曲通关',
         ];
         $rankFields = [
-            'max_level' => '初级最高关',
-            'max_level_mid' => '经典最高关',
-            'max_level_xhs' => '小红书最高关',
-            'max_level_story' => '故事最高关',
-            'max_level_song' => '歌曲最高关',
+            'max_level'           => '初级最高关',
+            'max_level_mid'       => '经典最高关',
+            'max_level_xhs'       => '小红书最高关',
+            'max_level_story'     => '故事最高关',
+            'max_level_song'      => '歌曲最高关',
+            'max_level_homophone' => '谐音最高关',
         ];
 
         $db = Db::connect($project);
@@ -801,14 +802,15 @@ class AdminService
         $db = Db::connect($project);
 
         $fieldMap = [
-            'basic'   => 'max_level',
-            'classic' => 'max_level_mid',
-            'xhs'     => 'max_level_xhs',
-            'story'   => 'max_level_story',
-            'song'    => 'max_level_song',
+            'basic'     => 'max_level',
+            'classic'   => 'max_level_mid',
+            'xhs'       => 'max_level_xhs',
+            'story'     => 'max_level_story',
+            'song'      => 'max_level_song',
+            'homophone' => 'max_level_homophone',
         ];
 
-        $fields = 'user_id, max_level, max_level_mid, max_level_xhs, max_level_story, max_level_song, updated_at';
+        $fields = 'user_id, max_level, max_level_mid, max_level_xhs, max_level_story, max_level_song, max_level_homophone, updated_at';
 
         // ── count ──
         $countSql = 'SELECT COUNT(*) AS cnt FROM pun_game_rank';
@@ -850,8 +852,9 @@ class AdminService
                 'classic_count' => (int) ($row['max_level_mid'] ?? -1),
                 'xhs_count'     => (int) ($row['max_level_xhs'] ?? -1),
                 'story_count'   => (int) ($row['max_level_story'] ?? 0),
-                'song_count'    => (int) ($row['max_level_song'] ?? 0),
-                'updated_at'    => $row['updated_at'] ?? '',
+                'song_count'      => (int) ($row['max_level_song'] ?? 0),
+                'homophone_count' => (int) ($row['max_level_homophone'] ?? -1),
+                'updated_at'      => $row['updated_at'] ?? '',
             ];
         }, $rows);
 
