@@ -121,12 +121,97 @@ class Admin extends BaseController
         return json(['code' => 200, 'message' => $id ? '已更新' : '已创建', 'data' => null]);
     }
 
-    public function announcementDelete(Request $request): \think\Response
+    public function announcementTogglePublish(Request $request): \think\Response
     {
         $id = (int) $request->post('id', 0);
         if ($id <= 0) return json(['code' => 400, 'message' => '缺少公告ID', 'data' => null]);
-        $this->service->deleteAnnouncement($this->getProject($request), $id);
-        return json(['code' => 200, 'message' => '已下架', 'data' => null]);
+        $result = $this->service->toggleAnnouncementPublish($this->getProject($request), $id);
+        return json(['code' => 200, 'message' => $result['is_published'] ? '已上架' : '已下架', 'data' => $result]);
+    }
+
+    // ─── 账户管理 ───────────────────────────────────────
+
+    private function requireSuperAdmin(Request $request): ?\think\Response
+    {
+        if ($request->admin_role !== 'superadmin') {
+            return json(['code' => 403, 'message' => '仅超级管理员可操作', 'data' => null]);
+        }
+        return null;
+    }
+
+    public function accountList(Request $request): \think\Response
+    {
+        if ($err = $this->requireSuperAdmin($request)) return $err;
+        return json(['code' => 200, 'message' => 'success', 'data' => $this->service->accountList()]);
+    }
+
+    public function accountSave(Request $request): \think\Response
+    {
+        if ($err = $this->requireSuperAdmin($request)) return $err;
+
+        $id = $request->post('id', null);
+        $username = trim((string) $request->post('username', ''));
+        $password = trim((string) $request->post('password', ''));
+        $role = trim((string) $request->post('role', 'admin'));
+        $isActive = (int) $request->post('is_active', 1);
+
+        if ($username === '') return json(['code' => 400, 'message' => '用户名不能为空', 'data' => null]);
+        if (!$id && $password === '') return json(['code' => 400, 'message' => '密码不能为空', 'data' => null]);
+
+        // 安全：不允许修改自己的角色 或 禁用自己
+        if ($id && (int) $id === $request->admin_id) {
+            if ($role !== $request->admin_role) {
+                return json(['code' => 400, 'message' => '不能修改自己的角色', 'data' => null]);
+            }
+            if ($isActive === 0) {
+                return json(['code' => 400, 'message' => '不能禁用自己', 'data' => null]);
+            }
+        }
+
+        try {
+            $this->service->accountSave($username, $password, $role, $isActive, $id ? (int) $id : null, (int) $request->admin_id);
+            return json(['code' => 200, 'message' => $id ? '已更新' : '已创建', 'data' => null]);
+        } catch (\InvalidArgumentException $e) {
+            return json(['code' => 400, 'message' => $e->getMessage(), 'data' => null]);
+        }
+    }
+
+    public function accountToggleActive(Request $request): \think\Response
+    {
+        if ($err = $this->requireSuperAdmin($request)) return $err;
+
+        $id = (int) $request->post('id', 0);
+        if ($id <= 0) return json(['code' => 400, 'message' => '缺少账户ID', 'data' => null]);
+
+        if ($id === $request->admin_id) {
+            return json(['code' => 400, 'message' => '不能禁用自己', 'data' => null]);
+        }
+
+        try {
+            $result = $this->service->toggleAccountActive($id);
+            return json(['code' => 200, 'message' => $result['is_active'] ? '已启用' : '已禁用', 'data' => $result]);
+        } catch (\InvalidArgumentException $e) {
+            return json(['code' => 400, 'message' => $e->getMessage(), 'data' => null]);
+        }
+    }
+
+    public function accountDelete(Request $request): \think\Response
+    {
+        if ($err = $this->requireSuperAdmin($request)) return $err;
+
+        $id = (int) $request->post('id', 0);
+        if ($id <= 0) return json(['code' => 400, 'message' => '缺少账户ID', 'data' => null]);
+
+        if ($id === $request->admin_id) {
+            return json(['code' => 400, 'message' => '不能删除自己', 'data' => null]);
+        }
+
+        try {
+            $this->service->deleteAccount($id);
+            return json(['code' => 200, 'message' => '已删除', 'data' => null]);
+        } catch (\InvalidArgumentException $e) {
+            return json(['code' => 400, 'message' => $e->getMessage(), 'data' => null]);
+        }
     }
 
     // ─── 用户查询 ───────────────────────────────────────

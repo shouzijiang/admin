@@ -16,6 +16,7 @@ class AdminRequestLog
     private const PATH_MODULE_MAP = [
         'activity-float' => '活动配置',
         'announcements'  => '公告管理',
+        'accounts'       => '账户管理',
         'users/search'   => '用户查询',
         'users/detail'   => '用户查询',
         'users/quota'    => '用户查询',
@@ -39,8 +40,11 @@ class AdminRequestLog
     /** 路径→操作名 映射（仅增删改） */
     private const PATH_ACTION_MAP = [
         'activity-float'           => ['POST' => '保存活动配置', 'DELETE' => '删除活动配置'],
-        'announcements/unpublish'  => ['POST' => '下架公告'],
+        'announcements/toggle-publish' => ['POST' => '上下架公告'],
         'announcements'            => ['POST' => '保存公告'],
+        'accounts/toggle-active'    => ['POST' => '启禁账户'],
+        'accounts/delete'          => ['POST' => '删除账户'],
+        'accounts'                 => ['POST' => '保存账户'],
         'users/quota'              => ['POST' => '修改解字次数'],
         'users/progress'           => ['POST' => '修改通关记录'],
         'users/vip'                => ['POST' => '修改VIP'],
@@ -258,6 +262,13 @@ class AdminRequestLog
                     $data = Db::connect($project)->name('pun_game_mail')->where('id', $id)->find();
                 }
             }
+            // 账户管理: admin_users (管理库)
+            elseif (str_starts_with($path, 'accounts')) {
+                $id = (int) $request->post('id', 0);
+                if ($id > 0) {
+                    $data = Db::name('admin_users')->where('id', $id)->field('id, username, role, is_active')->find();
+                }
+            }
             // 反馈回复: pun_game_feedback (回复和更新回复都查反馈记录)
             elseif (str_starts_with($path, 'feedbacks/reply')) {
                 $id = (int) $request->post('id', 0);
@@ -360,6 +371,13 @@ class AdminRequestLog
                 $id = (int) $request->post('id', 0);
                 if ($id > 0) {
                     $data = Db::connect($project)->name('pun_game_mail')->where('id', $id)->find();
+                }
+            }
+            // 账户管理: admin_users (管理库)
+            elseif (str_starts_with($path, 'accounts')) {
+                $id = (int) $request->post('id', 0);
+                if ($id > 0) {
+                    $data = Db::name('admin_users')->where('id', $id)->field('id, username, role, is_active')->find();
                 }
             }
             // 反馈回复: pun_game_feedback (回复和更新回复都查反馈记录)

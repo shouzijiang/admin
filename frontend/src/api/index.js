@@ -18,6 +18,13 @@ http.interceptors.request.use(config => {
 http.interceptors.response.use(
   res => {
     console.log('[api:res]', res.config?.url, res.status, res.data)
+    // 统一拦截 code=401：令牌无效或过期，清除 token 并跳转登录
+    if (res.data?.code === 401) {
+      localStorage.removeItem('admin_token')
+      ElMessage.error(res.data?.message || '令牌无效或已过期')
+      window.location.href = '/#/login'
+      return Promise.reject(new Error('未登录'))
+    }
     return res.data
   },
   err => {

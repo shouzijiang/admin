@@ -15,9 +15,9 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="is_published" label="状态" width="90">
+      <el-table-column prop="is_published" label="状态" width="120">
         <template #default="{ row }">
-          <el-tag :type="row.is_published ? 'success' : 'info'">{{ row.is_published ? '已发布' : '草稿' }}</el-tag>
+          <el-tag :type="row.is_published ? 'success' : 'info'">{{ row.is_published ? '已发布' : '草稿/已下架' }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="published_at" label="发布时间" width="170" />
@@ -25,7 +25,9 @@
         <template #default="{ row }">
           <el-button size="small" @click="openDetail(row)">详情</el-button>
           <el-button size="small" @click="openDialog(row)">编辑</el-button>
-          <el-button size="small" type="danger" @click="remove(row.id)">下架</el-button>
+          <el-button size="small" :type="row.is_published ? 'danger' : 'success'" @click="togglePublish(row.id)">
+            {{ row.is_published ? '下架' : '上架' }}
+          </el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -93,6 +95,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
 import http from '../api/index.js'
 
 const list = ref([])
@@ -101,14 +104,18 @@ const detailVisible = ref(false)
 const editId = ref(null)
 const saving = ref(false)
 const detail = ref(null)
-const emptyForm = () => ({
-  version_code: '',
-  title: '',
-  body: '',
-  changelog_type: 'normal',
-  is_published: 1,
-  published_at: '',
-})
+const emptyForm = () => {
+  const now = new Date()
+  const pad = (n) => String(n).padStart(2, '0')
+  return {
+    version_code: `${now.getFullYear()}.${pad(now.getMonth() + 1)}.${pad(now.getDate())}`,
+    title: '最新更新',
+    body: '',
+    changelog_type: 'normal',
+    is_published: 1,
+    published_at: `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`,
+  }
+}
 const form = ref(emptyForm())
 
 onMounted(fetchList)
@@ -166,6 +173,20 @@ function openDialog(row) {
 }
 
 async function save() {
+  // 判空：所有字段不能为空
+  const required = [
+    { key: 'version_code', label: '版本号' },
+    { key: 'title', label: '标题' },
+    { key: 'body', label: '内容' },
+    { key: 'published_at', label: '发布时间' },
+  ]
+  for (const { key, label } of required) {
+    if (!form.value[key]) {
+      ElMessage.warning(`请填写${label}`)
+      return
+    }
+  }
+
   saving.value = true
   try {
     const data = { ...form.value }
@@ -176,9 +197,9 @@ async function save() {
   } catch {} finally { saving.value = false }
 }
 
-async function remove(id) {
+async function togglePublish(id) {
   try {
-    await http.post('/admin/announcements/unpublish', { id })
+    await http.post('/admin/announcements/toggle-publish', { id })
     fetchList()
   } catch {}
 }

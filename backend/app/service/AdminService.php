@@ -62,7 +62,84 @@ class AdminService
         Db::name('admin_users')->where('id', $admin['id'])->update(['last_login' => date('Y-m-d H:i:s')]);
         $token = \app\middleware\AdminAuth::generateToken((int) $admin['id'], $admin['role']);
 
-        return ['token' => $token, 'username' => $admin['username'], 'role' => $admin['role']];
+        return ['token' => $token, 'username' => $admin['username'], 'role' => $admin['role'], 'id' => (int) $admin['id']];
+    }
+
+    // ─── 账户管理 ──────────────────────────────────────────
+
+    public function accountList(): array
+    {
+        $rows = Db::name('admin_users')
+            ->field('id, username, role, is_active, last_login, created_at')
+            ->order('id asc')
+            ->select()
+            ->toArray();
+        return ['list' => $rows];
+    }
+
+    public function accountSave(string $username, string $password, string $role, int $isActive, ?int $id, int $currentAdminId): void
+    {
+        $role = in_array($role, ['superadmin', 'admin'], true) ? $role : 'admin';
+
+        if ($id) {
+            // 更新
+            $exists = Db::name('admin_users')->where('id', $id)->find();
+            if (!$exists) throw new \InvalidArgumentException('账户不存在');
+
+            $dup = Db::name('admin_users')->where('username', $username)->where('id', '<>', $id)->find();
+            if ($dup) throw new \InvalidArgumentException('用户名已被占用');
+
+            $row = [
+                'username'  => $username,
+                'role'      => $role,
+                'is_active' => $isActive,
+            ];
+            if ($password !== '') {
+                if (strlen($password) < 6 || strlen($password) > 32) {
+                    throw new \InvalidArgumentException('密码长度须为 6-32 位');
+                }
+                $row['password'] = password_hash($password, PASSWORD_BCRYPT);
+            }
+            Db::name('admin_users')->where('id', $id)->update($row);
+        } else {
+            // 新增
+            $dup = Db::name('admin_users')->where('username', $username)->find();
+            if ($dup) throw new \InvalidArgumentException('用户名已存在');
+
+            if (strlen($password) < 6 || strlen($password) > 32) {
+                throw new \InvalidArgumentException('密码长度须为 6-32 位');
+            }
+
+            Db::name('admin_users')->insert([
+                'username'   => $username,
+                'password'   => password_hash($password, PASSWORD_BCRYPT),
+                'role'       => $role,
+                'is_active'  => $isActive,
+                'created_at' => date('Y-m-d H:i:s'),
+            ]);
+        }
+    }
+
+    public function toggleAccountActive(int $id): array
+    {
+        $current = Db::name('admin_users')->where('id', $id)->value('is_active');
+        if ($current === null) throw new \InvalidArgumentException('账户不存在');
+        $newStatus = $current ? 0 : 1;
+        Db::name('admin_users')->where('id', $id)->update(['is_active' => $newStatus]);
+        return ['is_active' => $newStatus];
+    }
+
+    public function deleteAccount(int $id): void
+    {
+        $account = Db::name('admin_users')->where('id', $id)->find();
+        if (!$account) throw new \InvalidArgumentException('账户不存在');
+
+        if ($account['role'] === 'superadmin') {
+            $count = Db::name('admin_users')->where('role', 'superadmin')->where('is_active', 1)->count();
+            if ($count <= 1) throw new \InvalidArgumentException('不能删除最后一个超级管理员');
+        }
+
+        Db::name('admin_users')->where('id', $id)->delete();
     }
 
     // ─── 项目 ──────────────────────────────────────────────
@@ -244,9 +321,12 @@ class AdminService
         }
     }
 
-    public function deleteAnnouncement(string $project, int $id): void
+    public function toggleAnnouncementPublish(string $project, int $id): array
     {
-        Db::connect($project)->name('pun_game_changelog')->where('id', $id)->update(['is_published' => 0]);
+        $current = Db::connect($project)->name('pun_game_changelog')->where('id', $id)->value('is_published');
+        $newStatus = $current ? 0 : 1;
+        Db::connect($project)->name('pun_game_changelog')->where('id', $id)->update(['is_published' => $newStatus]);
+        return ['is_published' => $newStatus];
     }
 
     // ─── 用户查询 ──────────────────────────────────────────

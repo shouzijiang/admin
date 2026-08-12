@@ -41,13 +41,15 @@ async function login() {
     })
     if (res.code === 200) {
       localStorage.setItem('admin_token', res.data.token)
+      localStorage.setItem('admin_id', res.data.id)
+      localStorage.setItem('admin_role', res.data.role)
       ElMessage.success('登录成功')
       router.push('/')
     } else {
       ElMessage.error(res.message || '登录失败')
     }
   } catch {
-    ElMessage.error('网络请求失败，请检查后端服务')
+    // 网络/超时等错误已由拦截器统一弹窗，不再重复提示
   } finally {
     loading.value = false
   }

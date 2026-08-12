@@ -5,7 +5,7 @@
         <span class="logo-icon">🎯</span>
         <span class="logo-text">管理后台</span>
       </div>
-      <el-menu :default-active="route.path" router>
+      <el-menu :default-active="route.path" :default-openeds="['/page-config', '/recharge', '/website']" router>
         <el-sub-menu index="/page-config">
           <template #title>
             <span class="menu-icon">⚙️</span>
@@ -40,39 +40,53 @@
           <span class="menu-icon">🏆</span>
           <span>排行榜查询</span>
         </el-menu-item>
-        <el-menu-item index="/logs">
-          <span class="menu-icon">📜</span>
-          <span>操作日志</span>
-        </el-menu-item>
         <el-menu-item index="/feedbacks">
           <span class="menu-icon">💬</span>
           <span>意见反馈</span>
         </el-menu-item>
-        <div class="menu-section-title">💳 充值系统</div>
-        <el-menu-item index="/orders">
-          <span class="menu-icon">🛒</span>
-          <span>订单查询</span>
+        <el-menu-item index="/logs">
+          <span class="menu-icon">📜</span>
+          <span>操作日志</span>
         </el-menu-item>
-        <div class="menu-section-title">🌐 公司官网</div>
-        <el-menu-item index="/website-config">
-          <span class="menu-icon">⚙️</span>
-          <span>官网配置</span>
-        </el-menu-item>
-        <el-menu-item index="/website-products">
-          <span class="menu-icon">📦</span>
-          <span>官网产品</span>
-        </el-menu-item>
-        <el-menu-item index="/website-content">
-          <span class="menu-icon">🧩</span>
-          <span>内容板块</span>
-        </el-menu-item>
-        <el-menu-item index="/website-jobs">
-          <span class="menu-icon">💼</span>
-          <span>官网招聘</span>
-        </el-menu-item>
-        <el-menu-item index="/website-messages">
-          <span class="menu-icon">📨</span>
-          <span>官网留言</span>
+        <el-sub-menu index="/recharge">
+          <template #title>
+            <span class="menu-icon">💳</span>
+            <span>充值系统</span>
+          </template>
+          <el-menu-item index="/orders">
+            <span class="menu-icon">🛒</span>
+            <span>订单查询</span>
+          </el-menu-item>
+        </el-sub-menu>
+        <el-sub-menu index="/website">
+          <template #title>
+            <span class="menu-icon">🌐</span>
+            <span>公司官网</span>
+          </template>
+          <el-menu-item index="/website-config">
+            <span class="menu-icon">⚙️</span>
+            <span>官网配置</span>
+          </el-menu-item>
+          <el-menu-item index="/website-products">
+            <span class="menu-icon">📦</span>
+            <span>官网产品</span>
+          </el-menu-item>
+          <el-menu-item index="/website-content">
+            <span class="menu-icon">🧩</span>
+            <span>内容板块</span>
+          </el-menu-item>
+          <el-menu-item index="/website-jobs">
+            <span class="menu-icon">💼</span>
+            <span>官网招聘</span>
+          </el-menu-item>
+          <el-menu-item index="/website-messages">
+            <span class="menu-icon">📨</span>
+            <span>官网留言</span>
+          </el-menu-item>
+        </el-sub-menu>
+        <el-menu-item v-if="adminRole === 'superadmin'" index="/accounts">
+          <span class="menu-icon">🔐</span>
+          <span>账户管理</span>
         </el-menu-item>
       </el-menu>
       <div class="logout" @click="logout">
@@ -90,11 +104,30 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 const router = useRouter()
 const route = useRoute()
+
+function getRole() {
+  const stored = localStorage.getItem('admin_role')
+  if (stored) return stored
+  // 兼容旧 token：直接从 JWT payload 解码 role
+  try {
+    const token = localStorage.getItem('admin_token')
+    if (token) {
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      return payload.role || ''
+    }
+  } catch {}
+  return ''
+}
+const adminRole = ref(getRole())
+
 function logout() {
   localStorage.removeItem('admin_token')
+  localStorage.removeItem('admin_id')
+  localStorage.removeItem('admin_role')
   router.push('/login')
 }
 </script>
@@ -176,7 +209,7 @@ function logout() {
   background-color: rgba(0, 0, 0, 0.22);
 }
 :deep(.el-sub-menu .el-menu-item) {
-  padding-left: 60px !important;
+  padding-left: 40px !important;
 }
 .logout {
   padding: 14px 20px;

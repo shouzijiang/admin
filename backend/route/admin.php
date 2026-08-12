@@ -15,8 +15,8 @@ Route::group('admin', function () {
         Route::post('album-categories', 'Admin/albumCategorySave');
         Route::delete('album-categories', 'Admin/albumCategoryDelete');
         Route::get('announcements', 'Admin/announcementList');
+        Route::post('announcements/toggle-publish', 'Admin/announcementTogglePublish');
         Route::post('announcements', 'Admin/announcementSave');
-        Route::post('announcements/unpublish', 'Admin/announcementDelete');
         Route::get('users/search', 'Admin/searchUsers');
         Route::get('users/detail', 'Admin/userDetail');
         Route::post('users/quota', 'Admin/userUpdateQuota');
@@ -37,6 +37,12 @@ Route::group('admin', function () {
         Route::get('operation-logs', 'Admin/operationLogList');
         Route::get('leaderboard', 'Admin/leaderboardList');
         Route::get('orders', 'Admin/orderList');
+
+        // ─── 账户管理（仅 superadmin）────────────────────────
+        Route::get('accounts', 'Admin/accountList');
+        Route::post('accounts', 'Admin/accountSave');
+        Route::post('accounts/toggle-active', 'Admin/accountToggleActive');
+        Route::post('accounts/delete', 'Admin/accountDelete');
 
         // 公司官网内容（独立库 qianzhi_website，不接多项目切换）
         Route::get('website/config', 'Website/configList');

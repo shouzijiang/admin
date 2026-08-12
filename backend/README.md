@@ -75,6 +75,7 @@ admin/
 ├── ✉️ 邮件发送     → /mails           → MailSend.vue
 ├── 🏆 排行榜查询   → /leaderboard     → LeaderboardQuery.vue
 ├── 📜 操作日志     → /logs            → OperationLog.vue
+├── 🔐 账户管理     → /accounts        → AccountManagement.vue  *(仅 superadmin)*
 ├── 🛒 订单查询     → /orders          → OrderQuery.vue
 ├── 💬 意见反馈     → /feedbacks       → Feedback.vue
 │
@@ -141,7 +142,7 @@ admin/
 - **API**:
   - `GET    /admin/announcements`  — 分页列表 (`page`, `pageSize`，最大 50 条/页)
   - `POST   /admin/announcements`  — 新增/更新
-  - `POST   /admin/announcements/unpublish`  — 下架公告 (设置 `is_published=0`)
+  - `POST   /admin/announcements/toggle-publish`  — 上下架切换
 - **字段**: `id`, `version_code`, `title`, `body`, `changelog_type` (`normal`/`notice`), `is_published`, `published_at`
 - **详情**: 列表「详情」按钮展示完整正文（按行拆分）与元信息
 
@@ -290,6 +291,20 @@ admin/
 - **API**: `GET /admin/website/messages`（分页 + `status=unread|read` 筛选）、`POST /admin/website/messages/read`、`DELETE /admin/website/messages`
 - **来源**: 官网「联系我们」表单，后端做了蜜罐字段 + 同 IP 一分钟限频
 
+### 14. 🔐 账户管理 (Account Management)
+
+管理后台管理员账户的增删改查，**仅超级管理员可访问**。
+
+- **页面**: `/accounts` → `AccountManagement.vue`
+- **数据库表**: `admin_users` (管理库 `qianzhi_admin`)
+- **API**:
+  - `GET    /admin/accounts`         — 账户列表（不含密码字段）
+  - `POST   /admin/accounts`         — 新增/更新
+  - `POST   /admin/accounts/delete`  — 删除账户
+- **字段**: `id`, `username`, `password` (bcrypt), `role` (superadmin/admin), `is_active`, `last_login`, `created_at`
+- **权限**: 仅 `role=superadmin` 可访问，前后端双重校验
+- **安全约束**: 不能删除/禁用自己、不能修改自己的角色、不能删除最后一个超级管理员
+
 <!-- FEATURES-END -->
 
 ---
@@ -317,7 +332,7 @@ admin/
 | DELETE | `/admin/album-categories` | 删除专辑分类 |
 | GET | `/admin/announcements` | 公告列表（分页） |
 | POST | `/admin/announcements` | 新增/更新公告 |
-| POST | `/admin/announcements/unpublish` | 下架公告 |
+| POST | `/admin/announcements/toggle-publish` | 上下架切换 |
 | GET | `/admin/users/search` | 用户搜索 |
 | GET | `/admin/users/detail` | 用户详情 |
 | POST | `/admin/users/quota` | 修改剩余解字次数 |
@@ -333,6 +348,10 @@ admin/
 | GET | `/admin/leaderboard` | 排行榜列表（分页+筛选） |
 | GET | `/admin/operation-logs` | 操作日志列表（分页+筛选） |
 | GET | `/admin/orders` | 订单列表（分页+筛选） |
+| GET | `/admin/accounts` | 账户列表 |
+| POST | `/admin/accounts` | 新增/更新账户 |
+| POST | `/admin/accounts/toggle-active` | 启用/禁用账户 |
+| POST | `/admin/accounts/delete` | 删除账户 |
 | GET | `/admin/feedbacks` | 反馈列表（分页+筛选） |
 | POST | `/admin/feedbacks/reply` | 回复反馈并发放奖励 |
 

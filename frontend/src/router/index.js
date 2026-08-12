@@ -9,6 +9,7 @@ import MailSend from '../views/MailSend.vue'
 import StreamerSettlement from '../views/StreamerSettlement.vue'
 import LeaderboardQuery from '../views/LeaderboardQuery.vue'
 import OperationLog from '../views/OperationLog.vue'
+import AccountManagement from '../views/AccountManagement.vue'
 import OrderQuery from '../views/OrderQuery.vue'
 import Feedback from '../views/Feedback.vue'
 import WebsiteConfig from '../views/WebsiteConfig.vue'
@@ -32,6 +33,7 @@ const routes = [
       { path: 'mails', component: MailSend },
       { path: 'leaderboard', component: LeaderboardQuery },
       { path: 'logs', component: OperationLog },
+      { path: 'accounts', component: AccountManagement },
       { path: 'orders', component: OrderQuery },
       { path: 'feedbacks', component: Feedback },
       { path: 'website-config', component: WebsiteConfig },

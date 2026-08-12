@@ -53,7 +53,7 @@
       <el-table-column prop="path" label="接口路径" min-width="160" show-overflow-tooltip />
       <el-table-column label="操作目标" width="160" show-overflow-tooltip>
         <template #default="{ row }">
-          <el-link v-if="isUserIdTarget(row.target)" type="primary" @click="goToUser(extractUserId(row.target))">
+          <el-link v-if="isUserModule(row.module) && isUserIdTarget(row.target)" type="primary" @click="goToUser(extractUserId(row.target))">
             {{ row.target }}
           </el-link>
           <span v-else>{{ row.target || '—' }}</span>
@@ -99,7 +99,7 @@
           </el-descriptions-item>
           <el-descriptions-item label="接口路径">{{ currentLog.path }}</el-descriptions-item>
           <el-descriptions-item label="操作目标">
-            <template v-if="isUserIdTarget(currentLog.target)">
+            <template v-if="isUserModule(currentLog.module) && isUserIdTarget(currentLog.target)">
               <el-link type="primary" @click="goToUser(extractUserId(currentLog.target))">
                 {{ currentLog.target }}
               </el-link>
@@ -117,7 +117,7 @@
 
         <div class="drawer-section">
           <div class="drawer-section-title">变更前值</div>
-          <div v-if="currentLog.before_val && extractUserIdsFromJson(currentLog.before_val).length" class="user-links">
+          <div v-if="currentLog.before_val && isUserModule(currentLog.module) && extractUserIdsFromJson(currentLog.before_val).length" class="user-links">
             <el-link
               v-for="uid in extractUserIdsFromJson(currentLog.before_val)"
               :key="uid"
@@ -136,7 +136,7 @@
 
         <div class="drawer-section">
           <div class="drawer-section-title">变更后值</div>
-          <div v-if="currentLog.after_val && extractUserIdsFromJson(currentLog.after_val).length" class="user-links">
+          <div v-if="currentLog.after_val && isUserModule(currentLog.module) && extractUserIdsFromJson(currentLog.after_val).length" class="user-links">
             <el-link
               v-for="uid in extractUserIdsFromJson(currentLog.after_val)"
               :key="uid"
@@ -209,6 +209,10 @@ function prettyJson(str) {
 
 function isUserIdTarget(target) {
   return /^user_id=\d+$/.test(target)
+}
+
+function isUserModule(module) {
+  return module === '意见反馈' || module === '邮件发送'
 }
 
 function extractUserId(target) {

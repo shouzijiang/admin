@@ -28,7 +28,7 @@
       <el-table-column prop="intent" label="合作意向" width="140" />
       <el-table-column prop="content" label="留言内容" min-width="300" show-overflow-tooltip />
       <el-table-column prop="created_at" label="提交时间" width="160" />
-      <el-table-column prop="ip" label="IP" width="130" />
+      <el-table-column prop="ip" label="IP" width="160" />
       <el-table-column label="操作" width="170" fixed="right">
         <template #default="{ row }">
           <el-button size="small" @click="detail(row)">详情</el-button>
