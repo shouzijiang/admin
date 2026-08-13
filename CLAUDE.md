@@ -15,6 +15,8 @@
 
 - 操作日志显示”下架后变更后值只剩 `{\”id\”:48}`，疑似内容被清空” → after_val 取的是请求参数而非数据库变更后快照，且历史上 DELETE 改 POST 后未做回归引发误判风险 → 操作日志改为成功后优先回查 DB 作为 after_val；公告更新改为仅更新传入字段；下架接口仅更新 `is_published`。
 - 官网留言接口 `/admin/website/messages` 返回 404：`method not exists:app\controller\Admin->website()` → 路由和控制器代码都正确，但生产环境路由缓存了旧路由表，新增的 `website/messages` 路由未被识别，ThinkPHP 回退到默认路由解析 → **任何新增/修改路由部署到生产后，必须执行 `php think route:clear` 清除路由缓存。**
+- 意见反馈页点「编辑」却变成了新发一封邮件：前端正确 POST `/admin/feedbacks/reply/update`，但后端执行的是 `feedbackReply`（插入新邮件）而非 `feedbackReplyUpdate` → `config/route.php` 里 `route_complete_match` 默认 `false`，静态路由按「前缀匹配」，短路由 `feedbacks/reply` 先于 `feedbacks/reply/update` 注册，把 `/feedbacks/reply/update` 抢走了 → **`route_complete_match` 必须设为 `true`（本项目所有路由都是精确路径）；同类短前缀路由（如 `streamer/unit-prices` 与 `streamer/unit-prices/sync`）也一并被修复。操作日志的 PATH_ACTION_MAP 里 `feedbacks/reply/update` 需排在 `feedbacks/reply` 之前，否则日志会把“更新反馈回复”错标成“回复反馈”。**
+- 编辑反馈回复「保存后邮件内容没变更」：前端 `Feedback.vue` 的 `doReply`/`doEditReply` 只判 `res.code === 200` 才走成功分支，但 axios 响应拦截器对业务错误（HTTP 200 + `code!=200`）直接返回 `res.data`，旧代码在 `code!=200` 时不校验、照样提示成功并关闭弹窗，把后端失败伪装成成功；同时旧 `updateFeedbackReply` 在 `mail_id` 为 NULL（历史已回复记录未回填 mail_id）时 `where('id', NULL)` 静默更新 0 行、不报错 → **所有前端写操作（POST/PUT/DELETE）必须校验 `res.code === 200`，非 200 时用 `res.message` 提示真实错误；后端更新类方法先确认目标记录存在、外键非空、关联记录存在再 UPDATE，禁止静默 0 行。**
 
 ---
 

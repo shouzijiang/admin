@@ -269,12 +269,16 @@ async function doReply() {
   }
   replySaving.value = true
   try {
-    await http.post('/admin/feedbacks/reply', {
+    const res = await http.post('/admin/feedbacks/reply', {
       id: replyRow.value.id,
       content: replyContent.value.trim(),
       quota_add: replyQuota.value,
     })
-    ElMessage.success('回复已发送')
+    if (res.code !== 200) {
+      ElMessage.error(res.message || '回复失败')
+      return
+    }
+    ElMessage.success(res.message || '回复已发送')
     replyVisible.value = false
     fetchList()
   } catch {} finally { replySaving.value = false }
@@ -294,11 +298,15 @@ async function doEditReply() {
   }
   editReplySaving.value = true
   try {
-    await http.post('/admin/feedbacks/reply/update', {
+    const res = await http.post('/admin/feedbacks/reply/update', {
       id: editReplyRow.value.id,
       content: editReplyContent.value.trim(),
     })
-    ElMessage.success('回复内容已更新')
+    if (res.code !== 200) {
+      ElMessage.error(res.message || '更新失败')
+      return
+    }
+    ElMessage.success(res.message || '回复内容已更新')
     editReplyVisible.value = false
     fetchList()
   } catch {} finally { editReplySaving.value = false }

@@ -1158,11 +1158,16 @@ class AdminService
 
     public function updateFeedbackReply(string $project, int $id, string $content): void
     {
-        $feedback = Db::connect($project)->name('pun_game_feedback')->where('id', $id)->find();
+        $db = Db::connect($project);
+        $feedback = $db->name('pun_game_feedback')->where('id', $id)->find();
         if (!$feedback) throw new \InvalidArgumentException('反馈记录不存在');
         if (empty($feedback['mail_id'])) throw new \InvalidArgumentException('未找到关联回复邮件');
 
-        Db::connect($project)->name('pun_game_mail')->where('id', (int) $feedback['mail_id'])->update([
+        // 确认关联邮件仍存在，避免静默更新 0 行导致“保存了但内容没变”
+        $mail = $db->name('pun_game_mail')->where('id', (int) $feedback['mail_id'])->find();
+        if (!$mail) throw new \InvalidArgumentException('关联的回复邮件不存在或已被删除，请重新回复');
+
+        $db->name('pun_game_mail')->where('id', (int) $feedback['mail_id'])->update([
             'content'    => $content,
             'updated_at' => date('Y-m-d H:i:s'),
         ]);

@@ -17,7 +17,9 @@ return [
     // 合并路由规则
     'route_rule_merge'      => false,
     // 路由是否完全匹配
-    'route_complete_match'  => false,
+    // 必须为 true：本项目所有路由都是精确路径，false 会让短路由前缀匹配长 URL，
+    // 导致 /admin/feedbacks/reply 抢先匹配 /admin/feedbacks/reply/update（编辑变成再次发送邮件）
+    'route_complete_match'  => true,
     // 去除斜杠
     'remove_slash'          => false,
     // 默认的路由变量规则
