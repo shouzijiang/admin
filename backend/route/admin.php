@@ -37,6 +37,9 @@ Route::group('admin', function () {
         Route::get('operation-logs', 'Admin/operationLogList');
         Route::get('leaderboard', 'Admin/leaderboardList');
         Route::get('orders', 'Admin/orderList');
+        Route::post('orders/redeliver', 'Admin/orderRedeliver');
+        Route::post('orders/recover-closed', 'Admin/orderRecoverClosed');
+        Route::post('orders/mark-delivered', 'Admin/orderMarkDelivered');
 
         // ─── 账户管理（仅 superadmin）────────────────────────
         Route::get('accounts', 'Admin/accountList');

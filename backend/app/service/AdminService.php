@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace app\service;
 
 use think\facade\Db;
+use think\facade\Log;
 
 /**
  * 管理后台服务（多项目支持）
@@ -12,6 +13,7 @@ use think\facade\Db;
  * 数据库:
  *   Db::name('table')          → admin 自身库 (admin_users)
  *   Db::connect('think1')...  → 谐音梗项目库
+ *   Db::connect('qianzhi_pay') → 支付库 (pay_order)
  */
 class AdminService
 {
@@ -452,6 +454,7 @@ class AdminService
             'passed_levels' => '初级通关',
             'passed_levels_mid' => '经典通关',
             'passed_levels_xhs' => '小红书通关',
+            'passed_levels_homophone' => '谐音通关',
             'passed_levels_story' => '故事通关',
             'passed_levels_song' => '歌曲通关',
         ];
@@ -513,6 +516,7 @@ class AdminService
                     $rankRow['max_level'] = $rankRow['max_level'] ?? 0;
                     $rankRow['max_level_mid'] = $rankRow['max_level_mid'] ?? -1;
                     $rankRow['max_level_xhs'] = $rankRow['max_level_xhs'] ?? -1;
+                    $rankRow['max_level_homophone'] = $rankRow['max_level_homophone'] ?? -1;
                     $rankRow['max_level_story'] = $rankRow['max_level_story'] ?? 0;
                     $rankRow['max_level_song'] = $rankRow['max_level_song'] ?? 0;
                     $db->name('pun_game_rank')->insert($rankRow);
@@ -528,6 +532,7 @@ class AdminService
                 'passed_levels' => [],
                 'passed_levels_mid' => [],
                 'passed_levels_xhs' => [],
+                'passed_levels_homophone' => [],
                 'passed_levels_story' => [],
                 'passed_levels_song' => [],
             ];
@@ -536,6 +541,7 @@ class AdminService
             'passed_levels' => $this->decodeLevelIdList($row['passed_levels'] ?? null),
             'passed_levels_mid' => $this->decodeLevelIdList($row['passed_levels_mid'] ?? null),
             'passed_levels_xhs' => $this->decodeLevelIdList($row['passed_levels_xhs'] ?? null),
+            'passed_levels_homophone' => $this->decodeLevelIdList($row['passed_levels_homophone'] ?? null),
             'passed_levels_story' => $this->decodeLevelIdList($row['passed_levels_story'] ?? null),
             'passed_levels_song' => $this->decodeLevelIdList($row['passed_levels_song'] ?? null),
         ];
@@ -981,10 +987,234 @@ class AdminService
             $q->where('created_at', '<=', $filters['date_end'] . ' 23:59:59');
         }
 
+        // 发货状态筛选：pun_pay_delivery 在游戏库，跨库无法 SQL JOIN，先取已发货订单号集合
+        if (!empty($filters['deliver_status'])) {
+            // 掉单对账只看已支付订单；用户显式选了状态筛选则以用户为准
+            if (empty($filters['status'])) {
+                $q->where('status', 'paid');
+            }
+            $deliveredNos = $this->getDeliveredOrderNos($project);
+            if ($filters['deliver_status'] === 'delivered') {
+                if (empty($deliveredNos)) {
+                    return ['list' => [], 'total' => 0];
+                }
+                $q->whereIn('order_no', $deliveredNos);
+            } else { // undelivered
+                if (!empty($deliveredNos)) {
+                    $q->whereNotIn('order_no', $deliveredNos);
+                }
+            }
+        }
+
         $total = $q->count();
         $list = $q->order('id desc')->page($page, $pageSize)->select()->toArray();
 
+        // 附加发货状态（对账依据）：1=已发货 0=未发货 null=发货表不可用
+        $this->attachDeliveryStatus($project, $list);
+
         return ['list' => $list, 'total' => $total];
+    }
+
+    /**
+     * 读取游戏库 pun_pay_delivery 中已发货的订单号集合
+     * 表不存在时返回 [] 并告警（本地库可能还没建表，不阻塞订单列表）
+     */
+    private function getDeliveredOrderNos(string $project): array
+    {
+        try {
+            $rows = Db::connect($project)->name('pun_pay_delivery')->column('order_no');
+            return is_array($rows) ? array_values($rows) : [];
+        } catch (\Throwable $e) {
+            Log::warning('[admin:orders] 查询 pun_pay_delivery 失败（表未建？）: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * 给订单列表附加发货状态 delivery：1=已发货 0=未发货 null=未知（发货表不可用）
+     */
+    private function attachDeliveryStatus(string $project, array &$list): void
+    {
+        if (empty($list)) {
+            return;
+        }
+        try {
+            $orderNos = array_column($list, 'order_no');
+            $deliveredNos = Db::connect($project)->name('pun_pay_delivery')
+                ->whereIn('order_no', $orderNos)
+                ->column('order_no');
+            $deliveredSet = array_flip(is_array($deliveredNos) ? $deliveredNos : []);
+            foreach ($list as &$row) {
+                $row['delivery'] = isset($deliveredSet[$row['order_no']]) ? 1 : 0;
+            }
+            unset($row);
+        } catch (\Throwable $e) {
+            Log::warning('[admin:orders] 附加发货状态失败（表未建？）: ' . $e->getMessage());
+            foreach ($list as &$row) {
+                $row['delivery'] = null;
+            }
+            unset($row);
+        }
+    }
+
+    /**
+     * 关单补入账：微信已收款但本地被重复下单关掉的订单
+     * 先 closed → paid，再走补发回调
+     *
+     * @return array{status: string, message: string}
+     */
+    public function recoverClosedPaidOrder(string $orderNo, string $transactionId, string $paidAt = ''): array
+    {
+        $orderNo = trim($orderNo);
+        $transactionId = trim($transactionId);
+        $paidAt = trim($paidAt);
+        if ($orderNo === '') {
+            throw new \InvalidArgumentException('缺少订单号');
+        }
+        if ($transactionId === '') {
+            throw new \InvalidArgumentException('请填写微信交易单号（从微信虚拟支付后台复制）');
+        }
+        if ($paidAt !== '' && !preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $paidAt)) {
+            throw new \InvalidArgumentException('支付时间格式应为 YYYY-MM-DD HH:MM:SS');
+        }
+        if ($paidAt === '') {
+            $paidAt = date('Y-m-d H:i:s');
+        }
+
+        $order = Db::connect('qianzhi_pay')->name('pay_order')->where('order_no', $orderNo)->find();
+        if (!$order) {
+            throw new \InvalidArgumentException('订单不存在');
+        }
+        $status = (string) ($order['status'] ?? '');
+        if ($status === 'paid') {
+            return $this->redeliverOrder($orderNo);
+        }
+        if ($status !== 'closed') {
+            throw new \InvalidArgumentException('仅「已关闭」订单可补入账，当前状态：' . $status);
+        }
+
+        $affected = Db::connect('qianzhi_pay')->name('pay_order')
+            ->where('order_no', $orderNo)
+            ->where('status', 'closed')
+            ->update([
+                'status'         => 'paid',
+                'transaction_id' => $transactionId,
+                'paid_at'        => $paidAt,
+            ]);
+        if ((int) $affected === 0) {
+            throw new \RuntimeException('入账失败，订单状态可能已变化，请刷新后重试');
+        }
+        Log::info("[admin:recover-closed] 关单补入账 order_no={$orderNo} txn={$transactionId} paid_at={$paidAt}");
+
+        $result = $this->redeliverOrder($orderNo);
+        $result['message'] = '已入账并补发：' . ($result['message'] ?? '成功');
+        return $result;
+    }
+
+    /**
+     * 手动补发：重放 think1 发货回调（callback_url + PAY_API_KEY）
+     * think1 侧有 pun_pay_delivery 幂等守卫，重复补发安全
+     *
+     * @return array{status: string, message: string} status: ok=补发成功
+     * @throws \InvalidArgumentException 订单不存在 / 状态不对 / 缺少配置
+     * @throws \RuntimeException 网络失败或游戏后端返回失败
+     */
+    public function redeliverOrder(string $orderNo): array
+    {
+        $order = Db::connect('qianzhi_pay')->name('pay_order')->where('order_no', $orderNo)->find();
+        if (!$order) {
+            throw new \InvalidArgumentException('订单不存在');
+        }
+        if (($order['status'] ?? '') !== 'paid') {
+            throw new \InvalidArgumentException('订单状态不是「已支付」，只有已支付订单才能补发');
+        }
+        $callbackUrl = trim((string) ($order['callback_url'] ?? ''));
+        if ($callbackUrl === '') {
+            throw new \InvalidArgumentException('订单缺少回调地址，无法补发');
+        }
+        $apiKey = env('PAY_API_KEY', '');
+        if ($apiKey === '') {
+            throw new \InvalidArgumentException('后台未配置 PAY_API_KEY，无法补发');
+        }
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $callbackUrl);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+            'user_id'        => (int) ($order['user_id'] ?? 0),
+            'order_no'       => (string) ($order['order_no'] ?? ''),
+            'transaction_id' => (string) ($order['transaction_id'] ?? ''),
+            'extra'          => (string) ($order['extra'] ?? ''),
+        ]));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $apiKey,
+        ]);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+        $resp = curl_exec($ch);
+        $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlErr = curl_error($ch);
+        curl_close($ch);
+
+        if ($resp === false) {
+            Log::error("[admin:redeliver] 请求游戏后端失败 order_no={$orderNo} err={$curlErr}");
+            throw new \RuntimeException('请求游戏后端失败：' . $curlErr);
+        }
+
+        $body = json_decode((string) $resp, true);
+        $bodyCode = (int) ($body['code'] ?? 0);
+        $bodyMsg = (string) ($body['message'] ?? '');
+        if ($httpCode === 200 && $bodyCode === 200) {
+            Log::info("[admin:redeliver] 补发成功 order_no={$orderNo} msg={$bodyMsg}");
+            return ['status' => 'ok', 'message' => $bodyMsg !== '' ? $bodyMsg : '补发成功'];
+        }
+
+        Log::error("[admin:redeliver] 补发失败 order_no={$orderNo} http={$httpCode} code={$bodyCode} resp={$resp}");
+        throw new \RuntimeException($bodyMsg !== '' ? $bodyMsg : '补发失败，游戏后端返回 HTTP ' . $httpCode);
+    }
+
+    /**
+     * 标记订单已发货（只写发货记录，不触发发货）
+     * 用途：历史订单回填——发货表上线前的订单，游戏侧已有证据（pun_vip/专辑行带该 order_no）
+     * 或人工核实过已发货的，标记后不再显示为未发货，避免误点补发导致重复发货
+     *
+     * @return array{status: string, message: string}
+     * @throws \InvalidArgumentException 订单不存在 / 状态不对
+     */
+    public function markDelivered(string $project, string $orderNo): array
+    {
+        $order = Db::connect('qianzhi_pay')->name('pay_order')->where('order_no', $orderNo)->find();
+        if (!$order) {
+            throw new \InvalidArgumentException('订单不存在');
+        }
+        if (($order['status'] ?? '') !== 'paid') {
+            throw new \InvalidArgumentException('订单状态不是「已支付」，无需标记');
+        }
+        $extra = json_decode((string) ($order['extra'] ?? ''), true);
+        $productType = (string) ($extra['product_type'] ?? '');
+        if ($productType === '') {
+            $productType = 'lifetime_vip';
+        }
+
+        $affected = Db::connect($project)->execute(
+            'INSERT IGNORE INTO pun_pay_delivery (user_id, order_no, product_type, transaction_id, created_at) VALUES (:uid, :order_no, :ptype, :txn, :now)',
+            [
+                'uid'      => (int) ($order['user_id'] ?? 0),
+                'order_no' => $orderNo,
+                'ptype'    => $productType,
+                'txn'      => (string) ($order['transaction_id'] ?? ''),
+                'now'      => date('Y-m-d H:i:s'),
+            ]
+        );
+        if ((int) $affected === 0) {
+            return ['status' => 'already', 'message' => '该订单已有发货记录'];
+        }
+        Log::info("[admin:mark-delivered] 人工标记已发货 order_no={$orderNo} product_type={$productType}");
+        return ['status' => 'ok', 'message' => '已标记为已发货'];
     }
 
     // ─── 邮件管理 ──────────────────────────────────────────

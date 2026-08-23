@@ -211,6 +211,16 @@ const progressModes = [
     progressLabel: '已通过歌曲ID',
     placeholder: '逗号分隔，如 1,2,3',
   },
+  {
+    key: 'homophone',
+    label: '谐音',
+    rankField: 'max_level_homophone',
+    rankLabel: '排行榜最高关',
+    rankHint: '未参与为 -1',
+    progressField: 'passed_levels_homophone',
+    progressLabel: '已通关卡',
+    placeholder: '逗号分隔，如 1,2,3',
+  },
 ]
 
 const keyword = ref('')
@@ -253,6 +263,7 @@ function initEditForms(data) {
     max_level: rank.max_level ?? 0,
     max_level_mid: rank.max_level_mid ?? -1,
     max_level_xhs: rank.max_level_xhs ?? -1,
+    max_level_homophone: rank.max_level_homophone ?? -1,
     max_level_story: rank.max_level_story ?? 0,
     max_level_song: rank.max_level_song ?? 0,
   }
@@ -260,6 +271,7 @@ function initEditForms(data) {
     passed_levels: levelsToText(progress.passed_levels),
     passed_levels_mid: levelsToText(progress.passed_levels_mid),
     passed_levels_xhs: levelsToText(progress.passed_levels_xhs),
+    passed_levels_homophone: levelsToText(progress.passed_levels_homophone),
     passed_levels_story: levelsToText(progress.passed_levels_story),
     passed_levels_song: levelsToText(progress.passed_levels_song),
   }

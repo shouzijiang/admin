@@ -234,10 +234,12 @@ function openReplyDialog(row) {
   replyVisible.value = true
 }
 
-function applyTemplate(label) {
+function applyTemplate(label, syncQuota = true) {
   const tpl = REPLY_TEMPLATES.find(t => t.label === label)
   if (!tpl) return
-  replyQuota.value = tpl.defaultQuota
+  if (syncQuota) {
+    replyQuota.value = tpl.defaultQuota
+  }
   if (label === '手动输入') {
     replyContent.value = ''
     return
@@ -248,10 +250,10 @@ function applyTemplate(label) {
     .replace('{quota}', replyQuota.value)
 }
 
-// 修改解字奖励时，回复内容中的次数同步更新
+// 修改解字奖励时，回复内容中的次数同步更新（仅同步占位符，不重置 quota）
 watch(replyQuota, () => {
   if (replyTemplate.value && replyTemplate.value !== '手动输入') {
-    applyTemplate(replyTemplate.value)
+    applyTemplate(replyTemplate.value, false)
   }
 })
 

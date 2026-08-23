@@ -381,17 +381,66 @@ class Admin extends BaseController
         $page = max(1, (int) $request->get('page', 1));
         $pageSize = min(50, max(1, (int) $request->get('pageSize', 20)));
         $filters = [
-            'order_no'    => trim((string) $request->get('order_no', '')),
-            'user_id'     => $request->get('user_id', ''),
-            'status'      => trim((string) $request->get('status', '')),
-            'pay_type'    => trim((string) $request->get('pay_type', '')),
-            'platform'    => trim((string) $request->get('platform', '')),
-            'pay_channel' => trim((string) $request->get('pay_channel', '')),
-            'product_id'  => trim((string) $request->get('product_id', '')),
-            'date_start'  => trim((string) $request->get('date_start', '')),
-            'date_end'    => trim((string) $request->get('date_end', '')),
+            'order_no'       => trim((string) $request->get('order_no', '')),
+            'user_id'        => $request->get('user_id', ''),
+            'status'         => trim((string) $request->get('status', '')),
+            'pay_type'       => trim((string) $request->get('pay_type', '')),
+            'platform'       => trim((string) $request->get('platform', '')),
+            'pay_channel'    => trim((string) $request->get('pay_channel', '')),
+            'product_id'     => trim((string) $request->get('product_id', '')),
+            'deliver_status' => trim((string) $request->get('deliver_status', '')),
+            'date_start'     => trim((string) $request->get('date_start', '')),
+            'date_end'       => trim((string) $request->get('date_end', '')),
         ];
         return json(['code' => 200, 'message' => 'success', 'data' => $this->service->orderList($this->getProject($request), $filters, $page, $pageSize)]);
+    }
+
+    public function orderRedeliver(Request $request): \think\Response
+    {
+        try {
+            $orderNo = trim((string) $request->post('order_no', ''));
+            if ($orderNo === '') {
+                throw new \InvalidArgumentException('缺少订单号');
+            }
+            $result = $this->service->redeliverOrder($orderNo);
+            return json(['code' => 200, 'message' => $result['message'], 'data' => $result]);
+        } catch (\InvalidArgumentException $e) {
+            return json(['code' => 400, 'message' => $e->getMessage(), 'data' => null]);
+        } catch (\RuntimeException $e) {
+            return json(['code' => 500, 'message' => $e->getMessage(), 'data' => null]);
+        }
+    }
+
+    public function orderRecoverClosed(Request $request): \think\Response
+    {
+        try {
+            $orderNo = trim((string) $request->post('order_no', ''));
+            $transactionId = trim((string) $request->post('transaction_id', ''));
+            $paidAt = trim((string) $request->post('paid_at', ''));
+            if ($orderNo === '') {
+                throw new \InvalidArgumentException('缺少订单号');
+            }
+            $result = $this->service->recoverClosedPaidOrder($orderNo, $transactionId, $paidAt);
+            return json(['code' => 200, 'message' => $result['message'], 'data' => $result]);
+        } catch (\InvalidArgumentException $e) {
+            return json(['code' => 400, 'message' => $e->getMessage(), 'data' => null]);
+        } catch (\RuntimeException $e) {
+            return json(['code' => 500, 'message' => $e->getMessage(), 'data' => null]);
+        }
+    }
+
+    public function orderMarkDelivered(Request $request): \think\Response
+    {
+        try {
+            $orderNo = trim((string) $request->post('order_no', ''));
+            if ($orderNo === '') {
+                throw new \InvalidArgumentException('缺少订单号');
+            }
+            $result = $this->service->markDelivered($this->getProject($request), $orderNo);
+            return json(['code' => 200, 'message' => $result['message'], 'data' => $result]);
+        } catch (\InvalidArgumentException $e) {
+            return json(['code' => 400, 'message' => $e->getMessage(), 'data' => null]);
+        }
     }
 
     // ─── 邮件管理 ───────────────────────────────────────

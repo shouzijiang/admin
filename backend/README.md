@@ -157,7 +157,7 @@ admin/
   - `GET /admin/users/detail?user_id=`  — 用户详情
   - `POST /admin/users/quota`  — 修改剩余解字次数 (`user_id`, `quota`)；累计消耗只读
   - `POST /admin/users/progress`  — 修改通关记录与排行榜 (`user_id`, `progress`, `rank`)
-- **详情包含**: 基本资料、来源渠道、VIP、解字剩余（可编辑）/累计消耗（只读）、五模式（初级/经典/小红书/故事/歌曲）通关 JSON 数组与排行榜最高关（均可编辑）
+- **详情包含**: 基本资料、来源渠道、VIP、解字剩余（可编辑）/累计消耗（只读）、六模式（初级/经典/小红书/故事/歌曲/谐音）通关 JSON 数组与排行榜最高关（均可编辑）
 
 ### 5. 💰 邀请结算 (Streamer Settlement)
 
@@ -195,7 +195,7 @@ admin/
 - **API**:
   - `GET /admin/leaderboard`  — 排行榜列表（分页 + 用户ID筛选）
 - **筛选条件**: `user_id` (精确匹配，留空查全部)
-- **字段**: `user_id`, `basic_count` (初级通关数), `classic_count` (经典通关数), `xhs_count` (小红书通关数), `story_count` (故事通关数), `song_count` (歌曲通关数), `updated_at` (更新时间)
+- **字段**: `user_id`, `basic_count` (初级通关数), `classic_count` (经典通关数), `xhs_count` (小红书通关数), `story_count` (故事通关数), `song_count` (歌曲通关数), `homophone_count` (谐音通关数), `updated_at` (更新时间)
 - **详情**: 通关数由 `passed_levels` JSON 数组长度计算得出，支持按各列排序
 
 ### 9. 📜 操作日志 (Operation Log)
@@ -212,14 +212,22 @@ admin/
 
 ### 10. 🛒 订单查询 (Order Query)
 
-查询支付订单，支持多条件筛选和分页。
+查询支付订单，支持多条件筛选和分页；对已支付但未发货的掉单可一键补发，对历史订单（发货记录上线前已支付）可标记已发货。
 
 - **页面**: `/orders` → `OrderQuery.vue`
-- **数据库表**: `pay_order` (项目库)
+- **数据库表**: `pay_order` (支付库), `pun_pay_delivery` (项目库，发货记录)
 - **API**:
-  - `GET /admin/orders`  — 订单列表（分页 + 多条件筛选）
-- **筛选条件**: `order_no` (订单号模糊), `user_id` (精确), `status` (pending/paid/refunded/closed), `pay_type` (wx_jsapi/wx_virtual), `platform` (ios/android), `pay_channel` (wechat/apple), `date_start`/`date_end` (创建时间范围)
-- **字段**: `id`, `order_no`, `user_id`, `amount`, `description`, `pay_type`, `platform`, `pay_channel`, `status`, `product_id`, `extra`, `transaction_id`, `prepay_id`, `paid_at`, `created_at`
+  - `GET /admin/orders`  — 订单列表（分页 + 多条件筛选，含发货状态）
+  - `POST /admin/orders/redeliver` — 补发订单 (`order_no`)，重放游戏后端发货回调（think1 侧幂等，不会重复发货）
+  - `POST /admin/orders/mark-delivered` — 标记订单已发货 (`order_no`)，直接写发货记录、不触发发货。仅用于历史订单：确认已发货但记录缺失（如 answer_60 游戏侧无证据可查），或回填脚本"无证据"清单里人工核实过的订单
+- **筛选条件**: `order_no` (订单号模糊), `user_id` (精确), `status` (pending/paid/refunded/closed), `pay_type` (wx_jsapi/wx_virtual), `platform` (ios/android), `pay_channel` (wechat/apple), `deliver_status` (delivered/undelivered，掉单对账用), `date_start`/`date_end` (创建时间范围)
+- **字段**: `id`, `order_no`, `user_id`, `amount`, `description`, `pay_type`, `platform`, `pay_channel`, `status`, `product_id`, `extra`, `transaction_id`, `prepay_id`, `paid_at`, `created_at`, `delivery` (1=已发货/0=未发货，仅已支付订单有意义)
+- **补发原理**: 支付库 `pay_order` 与项目库 `pun_pay_delivery` 分属两个库，跨库无法 SQL JOIN，发货状态在 PHP 内比对；补发 = 用订单的 `callback_url` 重放 think1 发货回调（带 `PAY_API_KEY`），发货逻辑只在 think1 一处维护
+- **历史订单处理**: `pun_pay_delivery` 上线前的已支付订单会显示"未发货"，处理方式：
+  1. 运行回填脚本 `php scripts/backfill_pun_pay_delivery.php`（干跑）→ 有游戏侧证据的（VIP/专辑订单）自动补记录；加 `--apply` 实际写入
+  2. 脚本输出的"无证据"清单（answer_60 历史单、pun_vip.order_no 被后续订单覆盖的老单）→ 人工核实后点"标记已发货"；确认未发货的才点"补发"
+  3. ⚠️ 历史 answer_60 订单盲目"补发"会重复 +60 次——游戏侧查不到它是否已发过，必须先核实
+- **配置**: 后台 `.env` 需配置 `PAY_API_KEY`（与 think1/pay 系统一致）
 
 ### 11. 💬 意见反馈 (Feedback)
 
@@ -347,7 +355,9 @@ admin/
 | POST | `/admin/mails/update` | 更新邮件 |
 | GET | `/admin/leaderboard` | 排行榜列表（分页+筛选） |
 | GET | `/admin/operation-logs` | 操作日志列表（分页+筛选） |
-| GET | `/admin/orders` | 订单列表（分页+筛选） |
+| GET | `/admin/orders` | 订单列表（分页+筛选，含发货状态） |
+| POST | `/admin/orders/redeliver` | 补发订单（重放游戏后端发货回调） |
+| POST | `/admin/orders/mark-delivered` | 标记订单已发货（不触发发货） |
 | GET | `/admin/accounts` | 账户列表 |
 | POST | `/admin/accounts` | 新增/更新账户 |
 | POST | `/admin/accounts/toggle-active` | 启用/禁用账户 |
@@ -403,7 +413,15 @@ admin/
 | `pun_game_level_progress` | 用户关卡进度 | 排行榜查询 |
 | `pun_game_mail` | 游戏内邮件记录 | 邮件发送 |
 | `pun_game_feedback` | 用户意见反馈 | 意见反馈 |
+| `pun_pay_delivery` | 支付发货记录（幂等去重） | 订单查询 |
+
+### 支付库 (`qianzhi_pay`，连接名 `qianzhi_pay`)
+
+| 表名 | 说明 | 关联模块 |
+|------|------|----------|
 | `pay_order` | 支付订单 | 订单查询 |
+
+> `pay_order` 表所有权归支付系统（`E:\php\pay`），DDL 见该项目的 `docs/database.sql`。本后台只读不写。
 
 ### 官网库 (`qianzhi_website`，连接名 `website`)
 

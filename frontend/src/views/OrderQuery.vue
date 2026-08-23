@@ -40,6 +40,12 @@
             <el-option label="Apple" value="apple" />
           </el-select>
         </el-form-item>
+        <el-form-item label="发货状态">
+          <el-select v-model="filters.deliver_status" placeholder="全部" clearable style="width: 120px">
+            <el-option label="未发货" value="undelivered" />
+            <el-option label="已发货" value="delivered" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="创建时间">
           <el-date-picker
             v-model="dateRange"
@@ -89,6 +95,13 @@
           </el-tag>
         </template>
       </el-table-column>
+      <el-table-column label="发货状态" width="100">
+        <template #default="{ row }">
+          <el-tag v-if="row.status === 'paid' && row.delivery === 1" size="small" type="success">已发货</el-tag>
+          <el-tag v-else-if="row.status === 'paid' && row.delivery === 0" size="small" type="danger">未发货</el-tag>
+          <span v-else>—</span>
+        </template>
+      </el-table-column>
       <el-table-column prop="product_id" label="道具ID" width="100" show-overflow-tooltip />
       <el-table-column prop="extra" label="扩展信息" width="150" show-overflow-tooltip>
         <template #default="{ row }">
@@ -98,6 +111,26 @@
       <el-table-column prop="transaction_id" label="微信交易号" width="200" show-overflow-tooltip />
       <el-table-column prop="paid_at" label="支付时间" width="170" />
       <el-table-column prop="created_at" label="创建时间" width="170" />
+      <el-table-column label="操作" width="210" fixed="right">
+        <template #default="{ row }">
+          <template v-if="row.status === 'paid' && row.delivery === 0">
+            <el-button
+              type="warning"
+              size="small"
+              :loading="redeliverLoading === row.order_no"
+              @click="handleRedeliver(row)"
+            >补发</el-button>
+            <el-button
+              type="primary"
+              size="small"
+              plain
+              :loading="markLoading === row.order_no"
+              @click="handleMarkDelivered(row)"
+            >标记已发货</el-button>
+          </template>
+          <span v-else>—</span>
+        </template>
+      </el-table-column>
     </el-table>
 
     <!-- 分页 -->
@@ -117,6 +150,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import http from '../api/index.js'
 
 const list = ref([])
@@ -125,6 +159,8 @@ const currentPage = ref(1)
 const pageSize = ref(20)
 const loading = ref(false)
 const dateRange = ref(null)
+const redeliverLoading = ref('')
+const markLoading = ref('')
 
 const filters = ref({
   order_no: '',
@@ -134,6 +170,7 @@ const filters = ref({
   platform: '',
   pay_channel: '',
   product_id: '',
+  deliver_status: '',
 })
 
 function payTypeLabel(type) {
@@ -194,10 +231,59 @@ function reset() {
     platform: '',
     pay_channel: '',
     product_id: '',
+    deliver_status: '',
   }
   dateRange.value = null
   currentPage.value = 1
   fetchList()
+}
+
+async function handleRedeliver(row) {
+  try {
+    await ElMessageBox.confirm(
+      `确认补发订单 ${row.order_no}？将重放游戏后端发货回调（幂等，不会重复发货）。`,
+      '补发确认',
+      { type: 'warning', confirmButtonText: '确认补发', cancelButtonText: '取消' },
+    )
+  } catch {
+    return
+  }
+  redeliverLoading.value = row.order_no
+  try {
+    const res = await http.post('/admin/orders/redeliver', { order_no: row.order_no })
+    if (res.code === 200) {
+      ElMessage.success(res.message || '补发成功')
+      fetchList()
+    } else {
+      ElMessage.error(res.message || '补发失败')
+    }
+  } catch {} finally {
+    redeliverLoading.value = ''
+  }
+}
+
+async function handleMarkDelivered(row) {
+  try {
+    await ElMessageBox.confirm(
+      `确认将订单 ${row.order_no} 标记为已发货？仅在该订单确认已发货（但发货记录缺失）时使用，标记后不再显示为未发货。`,
+      '标记确认',
+      { type: 'warning', confirmButtonText: '确认标记', cancelButtonText: '取消' },
+    )
+  } catch {
+    return
+  }
+  markLoading.value = row.order_no
+  try {
+    const res = await http.post('/admin/orders/mark-delivered', { order_no: row.order_no })
+    if (res.code === 200) {
+      ElMessage.success(res.message || '标记成功')
+      fetchList()
+    } else {
+      ElMessage.error(res.message || '标记失败')
+    }
+  } catch {} finally {
+    markLoading.value = ''
+  }
 }
 
 onMounted(fetchList)
