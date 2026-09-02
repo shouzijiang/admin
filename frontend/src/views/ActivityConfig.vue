@@ -6,6 +6,19 @@
     </div>
     <el-table :data="list" border stripe max-height="calc(100vh - 160px)">
       <el-table-column prop="id" label="ID" width="60" />
+      <el-table-column label="图标" width="120">
+        <template #default="{ row }">
+          <el-image
+            v-if="row.image"
+            :src="row.image"
+            :preview-src-list="[row.image]"
+            preview-teleported
+            style="width:48px;height:48px;border-radius:4px;"
+            fit="cover"
+          />
+          <span v-else style="color:#ccc;">无</span>
+        </template>
+      </el-table-column>
       <el-table-column label="启用" width="70">
         <template #default="{ row }"><el-tag :type="row.enabled ? 'success' : 'info'">{{ row.enabled ? '是' : '否' }}</el-tag></template>
       </el-table-column>
@@ -30,6 +43,14 @@
         </el-form-item>
         <el-form-item label="图标URL">
           <el-input v-model="form.image" placeholder="https://static2.sofun.online/..." />
+          <el-image
+            v-if="form.image"
+            :src="form.image"
+            :preview-src-list="[form.image]"
+            preview-teleported
+            style="width:64px;height:64px;margin-top:8px;border-radius:4px;"
+            fit="cover"
+          />
         </el-form-item>
         <el-form-item label="跳转地址">
           <el-input v-model="form.link" placeholder="空=打开专辑弹窗" />

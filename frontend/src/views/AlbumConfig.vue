@@ -28,7 +28,7 @@
       <el-table-column label="操作" width="150">
         <template #default="{ row }">
           <el-button size="small" @click="openDialog(row)">编辑</el-button>
-          <el-button size="small" type="danger" @click="remove(row.id)">删除</el-button>
+          <el-button size="small" type="danger" @click="remove(row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -66,6 +66,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import http from '../api/index.js'
 
 const list = ref([])
@@ -116,7 +117,15 @@ async function save() {
   } catch {} finally { saving.value = false }
 }
 
-async function remove(id) {
-  try { await http.delete('/admin/album-categories', { data: { id } }); fetchList() } catch {}
+async function remove(row) {
+  try {
+    const name = row.label || row.slug || `ID ${row.id}`
+    await ElMessageBox.confirm(`确定删除专辑「${name}」？删除后无法恢复。`, '删除确认', { type: 'warning' })
+    const res = await http.delete('/admin/album-categories', { data: { id: row.id } })
+    if (res.code === 200) {
+      ElMessage.success(res.message || '已删除')
+      fetchList()
+    }
+  } catch {}
 }
 </script>
