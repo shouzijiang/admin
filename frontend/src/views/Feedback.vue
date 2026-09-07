@@ -143,9 +143,9 @@ const REPLY_TEMPLATES = [
     defaultQuota: 3,
   },
   {
-    label: '问题已修复',
-    content: '感谢您的反馈。关于【{content}】问题已修复。奖励查看答案次数{quota}，奖励已发放。',
-    defaultQuota: 3,
+    label: '不予采纳',
+    content: '感谢您的反馈。关于【{content}】问题已修复。不予采纳。',
+    defaultQuota: 0,
   },
   {
     label: '需要更多信息',
