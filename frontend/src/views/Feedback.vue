@@ -144,7 +144,7 @@ const REPLY_TEMPLATES = [
   },
   {
     label: '不予采纳',
-    content: '感谢您的反馈。关于【{content}】问题已修复。不予采纳。',
+    content: '感谢您的反馈。关于【{content}】问题，不予采纳。',
     defaultQuota: 0,
   },
   {
