@@ -139,12 +139,12 @@ import http from '../api/index.js'
 const REPLY_TEMPLATES = [
   {
     label: '问题已采纳（默认）',
-    content: '感谢您的反馈。【{content}】问题已采纳。奖励查看答案次数{quota}，奖励已发放。',
+    content: '感谢您的反馈。关于【{content}】问题已采纳。奖励查看答案次数{quota}，奖励已发放。',
     defaultQuota: 3,
   },
   {
     label: '问题已修复',
-    content: '感谢您的反馈。【{content}】问题已修复。奖励查看答案次数{quota}，奖励已发放。',
+    content: '感谢您的反馈。关于【{content}】问题已修复。奖励查看答案次数{quota}，奖励已发放。',
     defaultQuota: 3,
   },
   {
@@ -154,7 +154,7 @@ const REPLY_TEMPLATES = [
   },
   {
     label: '感谢反馈（每日任务）',
-    content: '感谢反馈，可以做下每日任务领取查看答案次数哦~',
+    content: '感谢您的反馈。关于【{content}】问题，可以做下每日任务领取查看答案次数哦~',
     defaultQuota: 0,
   },
   {
